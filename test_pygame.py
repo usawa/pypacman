@@ -6,10 +6,42 @@ import time
 import math
 import os
 
+
 SCATTER = { "red": (1,1) ,
             "blue": (26,1),
             "yellow": (1,29),
             "pink": (26,29)
+}
+
+TIMERS = {
+    "red": {
+        "jail": 5,
+        "scatter": 10,
+        "chase": 15,
+        "runaway": 10,
+        "random": 10
+    },
+    "blue": {
+        "jail": 5,
+        "scatter": 10,
+        "chase": 15,
+        "runaway": 10,
+        "random": 10
+    },
+    "yellow": {
+        "jail": 5,
+        "scatter": 10,
+        "chase": 15,
+        "runaway": 10,
+        "random": 10
+    },
+    "pink": {
+        "jail": 5,
+        "scatter": 10,
+        "chase": 15,
+        "runaway": 10,
+        "random": 10
+    }    
 }
 
 MAP = [     [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53], 
@@ -41,9 +73,21 @@ MAP = [     [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48,
             [50,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1, 51],
             [50,  1, 34, 32, 32, 32, 32, 37, 36, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 37, 36, 32, 32, 32, 32, 35,  1, 51], 
             [50,  1, 36, 32, 32, 32, 32, 32, 32, 32, 32, 37,  1, 36, 37,  1, 36, 32, 32, 32, 32, 32, 32, 32, 32, 37,  1, 51], 
-            [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 , 0 ,51], 
+            [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 , 1 ,51], 
             [54, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 55], 
     ]
+
+WIDTH = len(MAP[0])*24
+HEIGHT = len(MAP)*24
+
+FPS = 30
+
+# define colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
 
 def display_map():
     y_length = len(MAP)
@@ -52,7 +96,7 @@ def display_map():
         for x in range(x_length):
             c=MAP[y][x]
             if c in walls:
-                screen.blit(walls[c],(x*24,y*24))
+                surface.blit(walls[c],(x*24,y*24))
 
 def collided():
     collided = False
@@ -64,7 +108,7 @@ def collided():
     return collided
 
 
-class pacman(pygame.sprite.Sprite):
+class Pacman(pygame.sprite.Sprite):
     "pacman management"
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -104,7 +148,7 @@ class Ghost(pygame.sprite.Sprite):
         self.distances = dict()
         self.allowed_moves = []
         self.direction = ""
-
+        self.speed = 4
 
         self.image = Ghost_pics[self.color]
         self.image.set_colorkey(BLACK)
@@ -205,114 +249,138 @@ class Ghost(pygame.sprite.Sprite):
 
         # Direction is set : move the ghost
         if self.direction == "left":
-            self.rect.x -= 4
+            self.rect.x -= self.speed
             # go to right border
             if self.rect.x < 0:
                 self.rect.x = WIDTH-12
 
         if self.direction == "right":
-            self.rect.x += 4
+            self.rect.x += self.speed
             # go to left border
             if self.rect.x > WIDTH-12:
                 self.rect.x = 0
 
         if self.direction == "up":
-            self.rect.y -= 4
+            self.rect.y -= self.speed
             if self.rect.y < 0:
                 self.rect.y = HEIGHT-12
 
         if self.direction == "down":
-            self.rect.y += 4
+            self.rect.y += self.speed
             if self.rect.y > HEIGHT-12:
                 self.rect.y = 0
 
         # For debug
-        print("color=",self.color, "x=",self.rect.x,"y=",self.rect.y, "mode=",self.mode, "f.direction=", self.direction, "allowed_moves=",self.allowed_moves, "distances=",self.distances)
+        #print("color=",self.color, "x=",self.rect.x,"y=",self.rect.y, "mode=",self.mode, "f.direction=", self.direction, "allowed_moves=",self.allowed_moves, "distances=",self.distances)
 
+# Root code
+def main():
+    global pacman_pic
+    global pacman
+    global screen
+    global Ghost_pics
+    global Ghosts
+    global walls
+    global surface
 
+    scale = 1
 
+    # initialize pygame and create window
+    pygame.init()
+    pygame.mixer.init()
+    display_infos = pygame.display.Info()
 
-WIDTH = len(MAP[0])*24
-HEIGHT = len(MAP)*24
+    x_resolution = display_infos.current_w
+    y_resolution = display_infos.current_h
 
-FPS = 30
+    if y_resolution < 800:
+        scale = 1.5
 
-# define colors
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Pacman by Slyce")
+    
 
-# initialize pygame and create window
-pygame.init()
-pygame.mixer.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("My Game")
-clock = pygame.time.Clock()
+    # create a surface to work on
+    surface = pygame.Surface((int(WIDTH/scale), int(HEIGHT/scale)))
 
-game_folder = os.path.dirname(__file__)
-img_folder = os.path.join(game_folder, 'img')
+    clock = pygame.time.Clock()
 
-# load ghost pictures
-Ghost_pics = dict()
-Ghost_pics['red'] = pygame.image.load(os.path.join(img_folder, 'red_up_ghost_1.png')).convert()
-Ghost_pics['yellow'] = pygame.image.load(os.path.join(img_folder, 'yellow_up_ghost_1.png')).convert()
-Ghost_pics['blue'] = pygame.image.load(os.path.join(img_folder, 'blue_up_ghost_1.png')).convert()
-Ghost_pics['pink'] = pygame.image.load(os.path.join(img_folder, 'pink_up_ghost_1.png')).convert()
+    # load ghost pictures
+    game_folder = os.path.dirname(__file__)
+    img_folder = os.path.join(game_folder, 'img')
 
-# load pacman picture
-pacman_pic = pygame.image.load(os.path.join(img_folder, 'pacman_right_1.png')).convert()
+    Ghost_pics = dict()
+    Ghost_pics['red'] = pygame.image.load(os.path.join(img_folder, 'red_up_ghost_1.png')).convert()
+    Ghost_pics['yellow'] = pygame.image.load(os.path.join(img_folder, 'yellow_up_ghost_1.png')).convert()
+    Ghost_pics['blue'] = pygame.image.load(os.path.join(img_folder, 'blue_up_ghost_1.png')).convert()
+    Ghost_pics['pink'] = pygame.image.load(os.path.join(img_folder, 'pink_up_ghost_1.png')).convert()
 
-# load walls based on values in MAP and if associated png exists
-walls = dict()
-for l in MAP:
-    for c in l:
-        if c not in walls:
-            png = os.path.join(img_folder, str(c) + ".png")
-            if(os.path.exists(png)):
-                walls[c] = pygame.image.load(png).convert()
+    # load pacman picture
+    pacman_pic = pygame.image.load(os.path.join(img_folder, 'pacman_right_1.png')).convert()
 
-all_sprites = pygame.sprite.Group()
+    # load walls based on values in MAP and if associated png exists
+    walls = dict()
+    for l in MAP:
+        for c in l:
+            if c not in walls:
+                png = os.path.join(img_folder, str(c) + ".png")
+                if(os.path.exists(png)):
+                    walls[c] = pygame.image.load(png).convert()
 
-# declare the four ghosts
-Ghosts = []
-Ghosts.append(Ghost(12,11, "red", "scatter"))
-Ghosts.append(Ghost(13,11, "blue", "scatter"))
-Ghosts.append(Ghost(14,11,"yellow","scatter"))
-Ghosts.append(Ghost(15,11,"pink","scatter"))
+    # declare sprites
+    all_sprites = pygame.sprite.Group()
 
-# declare pacman
-pacman = pacman(14, 17)
+    Ghosts = []
+    # declare the four ghosts
+    Ghosts.append(Ghost(12,11, "red", "scatter"))
+    Ghosts.append(Ghost(13,11, "blue", "scatter"))
+    Ghosts.append(Ghost(14,11,"yellow","scatter"))
+    Ghosts.append(Ghost(15,11,"pink","scatter"))
 
-all_sprites.add(pacman)
-all_sprites.add(Ghosts)
+    # declare pacman
+    pacman = Pacman(14, 17)
 
-# Game loop
-running = True
-while running:
-    # keep loop running at the right speed
-    clock.tick(FPS)
-    # Process input (events)
-    for event in pygame.event.get():
-        # check for closing window
-        if event.type == pygame.QUIT:
+    all_sprites.add(pacman)
+    all_sprites.add(Ghosts)
+
+    # Game loop
+    running = True
+    while running:
+        # keep loop running at the right speed
+        clock.tick(FPS)
+        # Process input (events)
+        for event in pygame.event.get():
+            # check for closing window
+            if event.type == pygame.QUIT:
+                running = False
+
+        # Update
+        all_sprites.update()
+        surface.fill(BLACK)
+
+        # Draw / render
+        # draw walls
+        display_map()
+
+        #all_sprites.draw(screen)
+        all_sprites.draw(surface)
+
+        # Scale ?
+        if scale > 1:
+            frame = pygame.transform.scale(surface, (int(WIDTH/scale), int(HEIGHT/scale)))
+        else:
+            frame = surface
+        # Surface on screen
+        screen.blit(frame, (0, 0))
+
+        # *after* drawing everything, flip the display
+        pygame.display.flip()
+
+        if collided():
             running = False
 
-    # Update
-    all_sprites.update()
-    screen.fill(BLACK)
+    pygame.quit()
 
-    # Draw / render
-    # draw walls
-    display_map()
-
-    all_sprites.draw(screen)
-
-    # *after* drawing everything, flip the display
-    pygame.display.flip()
-
-    if collided():
-        running = False
-
-pygame.quit()
+if __name__ == "__main__":
+    # execute only if run as a script
+    main()
