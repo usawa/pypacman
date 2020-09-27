@@ -16,14 +16,14 @@ SCATTER = { "red": (1,1) ,
 TIMERS = {
     "red": {
         "jail": 5,
-        "scatter": 10,
+        "scatter": 6,
         "chase": 15,
         "runaway": 10,
         "random": 10
     },
     "blue": {
         "jail": 5,
-        "scatter": 10,
+        "scatter": 8,
         "chase": 15,
         "runaway": 10,
         "random": 10
@@ -37,7 +37,7 @@ TIMERS = {
     },
     "pink": {
         "jail": 5,
-        "scatter": 10,
+        "scatter": 12,
         "chase": 15,
         "runaway": 10,
         "random": 10
@@ -150,11 +150,14 @@ class Ghost(pygame.sprite.Sprite):
         self.direction = ""
         self.speed = 4
 
+        # for the timers
+        self.start_time = time.time()
+        self.mode_changed = False
+
         self.image = Ghost_pics[self.color]
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 +12 , self.y * 24 + 12)
-        self.speed = 4
 
     # In chase or runaway modes, we calculate distance between ghost and pacman
     def distance_based_direction(self):
@@ -229,15 +232,32 @@ class Ghost(pygame.sprite.Sprite):
             self.allowed_moves.remove("down")
 
         # By default : no turn back
-        if self.direction != "":
-            reverse=self.opposite[self.moves.index(self.direction)]
-            if reverse in self.allowed_moves:
-                self.allowed_moves.remove(reverse)
+        if not self.mode_changed:
+            if self.direction != "":
+                reverse=self.opposite[self.moves.index(self.direction)]
+                if reverse in self.allowed_moves:
+                    self.allowed_moves.remove(reverse)
+
+    # Check time spent in current mode then change it based on a timer
+    def change_mode(self):
+        mode_time = TIMERS[self.color][self.mode]
+        current_time = time.time()
+        if current_time - self.start_time > mode_time:
+            if self.mode == "scatter":
+                self.mode = "chase"
+            self.start_time = current_time
+            self.mode_changed = True
+        else:
+            self.mode_changed = False
 
     # main function
     def update(self):
-        # Choose a direction only when we're on a MAP coordinates
-        if self.rect.x % 24 == 0 and self.rect.y % 24 ==0:
+
+        # change mode based on timer
+        self.change_mode()
+
+        # Choose a direction only when we're on a MAP coordinates or chase mode changed
+        if self.mode_changed or (self.rect.x % 24 == 0 and self.rect.y % 24 ==0):
             self.x = int(self.rect.x / 24)
             self.y = int(self.rect.y / 24)
 
