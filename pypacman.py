@@ -161,8 +161,6 @@ class Pacman(pygame.sprite.Sprite):
             MAP[self.y][self.x] = 0
             pacgums -= 1
 
-        print("pacgums=",pacgums)
-
     # move pacman
     def update(self):
 
@@ -190,7 +188,7 @@ class Pacman(pygame.sprite.Sprite):
                 if MAP[self.y + 1][self.x] < 16:
                     self.direction = "down"
 
-        print("Pacman: self.x=",self.x, "self.y=",self.y, "allowed_moves=",self.allowed_moves)
+        #print("Pacman: self.x=",self.x, "self.y=",self.y, "allowed_moves=",self.allowed_moves)
         # Direction is set : move the ghost
         if self.direction == "left" and "left" in self.allowed_moves:
             self.rect.x -= self.speed
@@ -454,6 +452,9 @@ def main():
                 Ghost_pics[color][direction][i] = pygame.image.load(os.path.join(img_folder, color+'_'+direction+'_ghost_'+str(i)+'.png')).convert()
 
     # load pacman picture
+    pacman_pic = dict()
+    pacman_pic=['right']
+
     pacman_pic = pygame.image.load(os.path.join(img_folder, 'pacman_right_1.png')).convert()
 
     # load walls based on values in MAP and if associated png exists
