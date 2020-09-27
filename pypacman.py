@@ -180,13 +180,13 @@ class Pacman(pygame.sprite.Sprite):
                 if MAP[self.y][self.x-1] < 16:
                     self.direction = "left"
             if keys[pygame.K_RIGHT]:
-                if MAP[self.y][self.x+1] < 16:
+                if self.x+1 <28 and MAP[self.y][self.x+1] < 16:
                     self.direction = "right"
             if keys[pygame.K_UP]:
                 if MAP[self.y - 1][self.x] < 16:
                     self.direction = "up"
             if keys[pygame.K_DOWN]:
-                if MAP[self.y + 1][self.x] < 16:
+                if self.y + 1 < 30 and MAP[self.y + 1][self.x] < 16:
                     self.direction = "down"
 
         #print("Pacman: self.x=",self.x, "self.y=",self.y, "allowed_moves=",self.allowed_moves)
@@ -198,26 +198,27 @@ class Pacman(pygame.sprite.Sprite):
             moved = True
             # go to right border
             if self.rect.x < 0:
-                self.rect.x = WIDTH-12
+                self.rect.x = WIDTH-24
 
         if self.direction == "right" and "right" in self.allowed_moves:
             self.rect.x += self.speed
             moved = True
             # go to left border
-            if self.rect.x > WIDTH-12:
+            if self.rect.x > WIDTH-24:
                 self.rect.x = 0
 
         if self.direction == "up" and "up" in self.allowed_moves:
             self.rect.y -= self.speed
             moved = True
             if self.rect.y < 0:
-                self.rect.y = HEIGHT-12
+                self.rect.y = HEIGHT-24
 
         if self.direction == "down" and "down" in self.allowed_moves:
             self.rect.y += self.speed
             moved = True
-            if self.rect.y > HEIGHT-12:
+            if self.rect.y > HEIGHT-24:
                 self.rect.y = 0
+
         if moved:
             self.count_moves += 1
 
