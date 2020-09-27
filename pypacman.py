@@ -110,7 +110,7 @@ def display_map():
             c=MAP[y][x]
             if c in walls:
                 surface.blit(walls[c],(x*24,y*24))
-
+    
 def collided():
     collided = False
     for f in Ghosts:
@@ -145,7 +145,7 @@ class Pacman(pygame.sprite.Sprite):
         # check walls
         if MAP[self.y][self.x-1] < 16:
             self.allowed_moves.append("left")
-        if self.x+1 < 28 and MAP[self.y][self.x+1] < 16:
+        if (self.x+1 < 28 and MAP[self.y][self.x+1] < 16) or (self.x == 27 and self.direction =="right"):
             self.allowed_moves.append("right")
         if MAP[self.y - 1][self.x] < 16:
             self.allowed_moves.append("up")
@@ -390,6 +390,14 @@ class Ghost(pygame.sprite.Sprite):
         # For debug
         #print("color=",self.color, "map_x=",self.x, "map_y=",self.y,"x=",self.rect.x,"y=",self.rect.y, "old mode=",self.old_mode, "mode=",self.mode, "f.direction=", self.direction, "allowed_moves=",self.allowed_moves, "distances=",self.distances)
 
+# Display text in center
+def display_text(surface, my_text):
+    font = pygame.font.Font('freesansbold.ttf', 32)   
+    text = font.render(my_text, True, WHITE) 
+    textRect = text.get_rect()  
+    textRect.center = (int(WIDTH / 2), int(HEIGHT / 2)) 
+    surface.blit(text, textRect)
+
 # Root code
 def main():
     global pacman_pic
@@ -403,7 +411,6 @@ def main():
     global pacgums
 
     pacgums = count_pacgums()
-
     score = 0
 
     scale = 1
@@ -413,7 +420,6 @@ def main():
     pygame.mixer.init()
     display_infos = pygame.display.Info()
 
-    x_resolution = display_infos.current_w
     y_resolution = display_infos.current_h
 
     if y_resolution < 800:
@@ -461,7 +467,7 @@ def main():
     Ghosts.append(Ghost(15,14,"pink","jail"))
 
     # declare pacman
-    pacman = Pacman(1, 29)
+    pacman = Pacman(14, 17)
 
     all_sprites.add(pacman)
     all_sprites.add(Ghosts)
@@ -469,6 +475,7 @@ def main():
     # Game loop
     running = True
     while running:
+
         # keep loop running at the right speed
         clock.tick(FPS)
         # Process input (events)
@@ -480,29 +487,35 @@ def main():
 
         # Update
         all_sprites.update()
+
         surface.fill(BLACK)
 
         # Draw / render
         # draw walls
         display_map()
 
-        #all_sprites.draw(screen)
+        # Draw sprites
         all_sprites.draw(surface)
 
+        if collided():
+            running = False
+            display_text(surface, "You lost !")
+            
         # Scale ?
         if scale > 1:
             frame = pygame.transform.scale(surface, (int(WIDTH/scale), int(HEIGHT/scale)))
         else:
             frame = surface
+
+
         # Surface on screen
         screen.blit(frame, (0, 0))
 
         # *after* drawing everything, flip the display
         pygame.display.flip()
 
-        if collided():
-            running = False
-            time.sleep(10)
+    time.sleep(5)
+
     pygame.quit()
 
 if __name__ == "__main__":
