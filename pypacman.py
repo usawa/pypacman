@@ -129,7 +129,7 @@ class Pacman(pygame.sprite.Sprite):
         self.x = x
         self.y = y
 
-        self.image = pacman_pic
+        self.image = Pacman_pics['left'][1]
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 + 12 , self.y * 24 + 12)
@@ -137,6 +137,7 @@ class Pacman(pygame.sprite.Sprite):
         self.direction = ""
         self.mode = "normal"
         self.allowed_moves = []
+        self.count_moves = 0
 
     # Check what moves are allowed from this position
     def get_allowed_moves(self):
@@ -192,26 +193,33 @@ class Pacman(pygame.sprite.Sprite):
         # Direction is set : move the ghost
         if self.direction == "left" and "left" in self.allowed_moves:
             self.rect.x -= self.speed
+            self.count_moves += 1
             # go to right border
             if self.rect.x < 0:
                 self.rect.x = WIDTH-12
 
         if self.direction == "right" and "right" in self.allowed_moves:
             self.rect.x += self.speed
+            self.count_moves += 1
             # go to left border
             if self.rect.x > WIDTH-12:
                 self.rect.x = 0
 
         if self.direction == "up" and "up" in self.allowed_moves:
             self.rect.y -= self.speed
+            self.count_moves += 1
             if self.rect.y < 0:
                 self.rect.y = HEIGHT-12
 
         if self.direction == "down" and "down" in self.allowed_moves:
             self.rect.y += self.speed
+            self.count_moves += 1
             if self.rect.y > HEIGHT-12:
                 self.rect.y = 0
 
+        if self.direction:
+            self.image = Pacman_pics[self.direction][(self.count_moves+1) % 3 + 1]
+            self.image.set_colorkey(BLACK)
 
 class Ghost(pygame.sprite.Sprite):
 
@@ -405,7 +413,7 @@ def display_text(surface, my_text):
 
 # Root code
 def main():
-    global pacman_pic
+    global Pacman_pics
     global pacman
     global screen
     global Ghost_pics
@@ -452,6 +460,12 @@ def main():
                 Ghost_pics[color][direction][i] = pygame.image.load(os.path.join(img_folder, color+'_'+direction+'_ghost_'+str(i)+'.png')).convert()
 
     # load pacman picture
+    Pacman_pics = dict()
+    for direction in ('left','right','up','down'):
+        Pacman_pics[direction] = dict()
+        for i in range(1,4):
+            Pacman_pics[direction][i] = pygame.image.load(os.path.join(img_folder, 'pacman_'+direction+'_'+str(i)+'.png')).convert()
+
     pacman_pic = dict()
     pacman_pic=['right']
 
