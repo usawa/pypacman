@@ -232,12 +232,13 @@ class Ghost(pygame.sprite.Sprite):
         self.allowed_moves = []
         self.direction = ""
         self.speed = 4
+        self.count_moves = 0
 
         # for the timers
         self.start_time = time.time()
         self.mode_changed = False
 
-        self.image = Ghost_pics[self.color]
+        self.image = Ghost_pics[self.color]['left'][1]
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 +12 , self.y * 24 + 12)
@@ -358,6 +359,9 @@ class Ghost(pygame.sprite.Sprite):
             self.x = int(self.rect.x / 24)
             self.y = int(self.rect.y / 24)
 
+            # We moved one case
+            self.count_moves += 1
+
             # What are the allowed moves ?
             self.get_allowed_moves()
 
@@ -386,6 +390,9 @@ class Ghost(pygame.sprite.Sprite):
             self.rect.y += self.speed
             if self.rect.y > HEIGHT-12:
                 self.rect.y = 0
+
+        self.image = Ghost_pics[self.color][self.direction][self.count_moves % 2 + 1] 
+        self.image.set_colorkey(BLACK)
 
         # For debug
         #print("color=",self.color, "map_x=",self.x, "map_y=",self.y,"x=",self.rect.x,"y=",self.rect.y, "old mode=",self.old_mode, "mode=",self.mode, "f.direction=", self.direction, "allowed_moves=",self.allowed_moves, "distances=",self.distances)
@@ -439,10 +446,12 @@ def main():
     img_folder = os.path.join(game_folder, 'img')
 
     Ghost_pics = dict()
-    Ghost_pics['red'] = pygame.image.load(os.path.join(img_folder, 'red_up_ghost_1.png')).convert()
-    Ghost_pics['yellow'] = pygame.image.load(os.path.join(img_folder, 'yellow_up_ghost_1.png')).convert()
-    Ghost_pics['blue'] = pygame.image.load(os.path.join(img_folder, 'blue_up_ghost_1.png')).convert()
-    Ghost_pics['pink'] = pygame.image.load(os.path.join(img_folder, 'pink_up_ghost_1.png')).convert()
+    for color in ('red','yellow','blue','pink'):
+        Ghost_pics[color] = dict()
+        for direction in ('left','right','up','down'):
+            Ghost_pics[color][direction] = dict()
+            for i in range(1,3):
+                Ghost_pics[color][direction][i] = pygame.image.load(os.path.join(img_folder, color+'_'+direction+'_ghost_'+str(i)+'.png')).convert()
 
     # load pacman picture
     pacman_pic = pygame.image.load(os.path.join(img_folder, 'pacman_right_1.png')).convert()
@@ -497,6 +506,7 @@ def main():
         # Draw sprites
         all_sprites.draw(surface)
 
+        # Collision test : must be enhanced
         if collided():
             running = False
             display_text(surface, "You lost !")
@@ -513,8 +523,6 @@ def main():
 
         # *after* drawing everything, flip the display
         pygame.display.flip()
-
-    time.sleep(5)
 
     pygame.quit()
 
