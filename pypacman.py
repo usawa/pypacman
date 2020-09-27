@@ -191,34 +191,41 @@ class Pacman(pygame.sprite.Sprite):
 
         #print("Pacman: self.x=",self.x, "self.y=",self.y, "allowed_moves=",self.allowed_moves)
         # Direction is set : move the ghost
+        moved = False
+
         if self.direction == "left" and "left" in self.allowed_moves:
             self.rect.x -= self.speed
-            self.count_moves += 1
+            moved = True
             # go to right border
             if self.rect.x < 0:
                 self.rect.x = WIDTH-12
 
         if self.direction == "right" and "right" in self.allowed_moves:
             self.rect.x += self.speed
-            self.count_moves += 1
+            moved = True
             # go to left border
             if self.rect.x > WIDTH-12:
                 self.rect.x = 0
 
         if self.direction == "up" and "up" in self.allowed_moves:
             self.rect.y -= self.speed
-            self.count_moves += 1
+            moved = True
             if self.rect.y < 0:
                 self.rect.y = HEIGHT-12
 
         if self.direction == "down" and "down" in self.allowed_moves:
             self.rect.y += self.speed
-            self.count_moves += 1
+            moved = True
             if self.rect.y > HEIGHT-12:
                 self.rect.y = 0
+        if moved:
+            self.count_moves += 1
 
         if self.direction:
-            self.image = Pacman_pics[self.direction][(self.count_moves+1) % 3 + 1]
+            if moved:
+                self.image = Pacman_pics[self.direction][self.count_moves % 3 + 1]
+            else:
+                self.image = Pacman_pics[self.direction][2]                
             self.image.set_colorkey(BLACK)
 
 class Ghost(pygame.sprite.Sprite):
