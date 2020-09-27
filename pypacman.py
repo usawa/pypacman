@@ -15,28 +15,28 @@ SCATTER = { "red": (1,1) ,
 
 TIMERS = {
     "red": {
-        "jail": 5,
-        "scatter": 6,
+        "jail": 2,
+        "scatter": 10,
         "chase": 15,
         "runaway": 10,
         "random": 10
     },
     "blue": {
-        "jail": 5,
+        "jail": 4,
         "scatter": 8,
         "chase": 15,
         "runaway": 10,
         "random": 10
     },
     "yellow": {
-        "jail": 5,
+        "jail": 6,
         "scatter": 10,
         "chase": 15,
         "runaway": 10,
         "random": 10
     },
     "pink": {
-        "jail": 5,
+        "jail": 8,
         "scatter": 12,
         "chase": 15,
         "runaway": 10,
@@ -56,10 +56,10 @@ MAP = [     [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48,
             [54, 49, 49, 49, 49, 57,  1, 33, 36, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 37, 33,  1, 56, 49, 49, 49, 49, 55],
             [ 0,  0,  0,  0,  0, 50,  1, 33, 34, 32, 32, 37,  1, 36, 37,  1, 36, 32, 32, 35, 33,  1, 51,  0,  0,  0,  0,  0],
             [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-            [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1, 56, 49, 49, 49, 49, 49, 49, 57,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-            [48, 48, 48, 48, 48, 58,  1, 36, 37,  1, 51,  0,  0,  0,  0,  0,  0, 50,  1, 36, 37,  1, 59, 48, 48, 48, 48, 48],
-            [ 0,  0,  0,  0,  0,  0,  1,  1,  1,  1, 51,  0,  0,  0,  0,  0,  0, 50,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0],
-            [49, 49, 49, 49, 49, 57,  1, 34, 35,  1, 51,  0,  0,  0,  0,  0,  0, 50,  1, 34, 35,  1, 56, 49, 49, 49, 49, 49],
+            [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1, 56, 49, 49, 17, 17, 49, 49, 57,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
+            [48, 48, 48, 48, 48, 58,  1, 36, 37,  1, 51, 64,  0,  0,  0,  0, 64, 50,  1, 36, 37,  1, 59, 48, 48, 48, 48, 48],
+            [ 0,  0,  0,  0,  0,  0,  1,  1,  1,  1, 51, 64,  0,  0,  0,  0, 64, 50,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0],
+            [49, 49, 49, 49, 49, 57,  1, 34, 35,  1, 51, 64,  0,  0,  0,  0, 64, 50,  1, 34, 35,  1, 56, 49, 49, 49, 49, 49],
             [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1, 59, 48, 48, 48, 48, 48, 48, 58,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
             [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
             [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1, 34, 32, 32, 32, 32, 32, 32, 35,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
@@ -88,6 +88,19 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+
+# count number of pacgums in map
+def count_pacgums():
+    y_length = len(MAP)
+    x_length = len(MAP[0])
+    pacgums = 0
+    for y in range(y_length):
+        for x in range(x_length):
+            if MAP[y][x] in (1,2):
+                pacgums += 1
+
+    return pacgums
+
 
 def display_map():
     y_length = len(MAP)
@@ -119,19 +132,88 @@ class Pacman(pygame.sprite.Sprite):
         self.image = pacman_pic
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
-        self.rect.center = (self.x * 24 +12 , self.y * 24 + 12)
+        self.rect.center = (self.x * 24 + 12 , self.y * 24 + 12)
         self.speed = 4
-        self.status = "normal"
+        self.direction = ""
+        self.mode = "normal"
+        self.allowed_moves = []
 
+    # Check what moves are allowed from this position
+    def get_allowed_moves(self):
+        self.allowed_moves = []
 
-    def set_status(self, status):
-        """
-        pacman status: pacgum, dead, normal
-        """
-        self.status = status
-    
-    def get_status(self):
-        return self.status
+        # check walls
+        if MAP[self.y][self.x-1] < 16:
+            self.allowed_moves.append("left")
+        if self.x+1 < 28 and MAP[self.y][self.x+1] < 16:
+            self.allowed_moves.append("right")
+        if MAP[self.y - 1][self.x] < 16:
+            self.allowed_moves.append("up")
+        if MAP[self.y + 1][self.x] < 16:
+            self.allowed_moves.append("down")
+
+    # Do we ate a pacgum ? Remove it from map and increment score
+    def check_pacgums(self):
+        global score
+        global pacgums
+        if MAP[self.y][self.x] == 1:
+            score += 10
+            MAP[self.y][self.x] = 0
+            pacgums -= 1
+
+        print("pacgums=",pacgums)
+
+    # move pacman
+    def update(self):
+
+        # Choose a direction only when we're on a MAP coordinates
+        if self.rect.x % 24 == 0 and self.rect.y % 24 == 0:
+            self.x = int(self.rect.x / 24)
+            self.y = int(self.rect.y / 24)
+
+            self.check_pacgums()
+
+            self.get_allowed_moves()
+
+            keys=pygame.key.get_pressed()
+
+            if keys[pygame.K_LEFT]:
+                if MAP[self.y][self.x-1] < 16:
+                    self.direction = "left"
+            if keys[pygame.K_RIGHT]:
+                if MAP[self.y][self.x+1] < 16:
+                    self.direction = "right"
+            if keys[pygame.K_UP]:
+                if MAP[self.y - 1][self.x] < 16:
+                    self.direction = "up"
+            if keys[pygame.K_DOWN]:
+                if MAP[self.y + 1][self.x] < 16:
+                    self.direction = "down"
+
+        print("Pacman: self.x=",self.x, "self.y=",self.y, "allowed_moves=",self.allowed_moves)
+        # Direction is set : move the ghost
+        if self.direction == "left" and "left" in self.allowed_moves:
+            self.rect.x -= self.speed
+            # go to right border
+            if self.rect.x < 0:
+                self.rect.x = WIDTH-12
+
+        if self.direction == "right" and "right" in self.allowed_moves:
+            self.rect.x += self.speed
+            # go to left border
+            if self.rect.x > WIDTH-12:
+                self.rect.x = 0
+
+        if self.direction == "up" and "up" in self.allowed_moves:
+            self.rect.y -= self.speed
+            if self.rect.y < 0:
+                self.rect.y = HEIGHT-12
+
+        if self.direction == "down" and "down" in self.allowed_moves:
+            self.rect.y += self.speed
+            if self.rect.y > HEIGHT-12:
+                self.rect.y = 0
+
 
 class Ghost(pygame.sprite.Sprite):
 
@@ -145,6 +227,7 @@ class Ghost(pygame.sprite.Sprite):
         self.y = y
         self.color = color
         self.mode = mode
+        self.old_mode = ""
         self.distances = dict()
         self.allowed_moves = []
         self.direction = ""
@@ -165,7 +248,15 @@ class Ghost(pygame.sprite.Sprite):
         y = self.y
         self.distances = dict()
 
-        if self.mode == "scatter":
+        # Previously in jail: target just outside jail to go outside
+        if self.old_mode == "jail":
+            x_target = 14
+            y_target = 11
+            # We're outside : go to normal coordinates
+            if self.y <= 11:
+                self.old_mode = ""
+               
+        elif self.mode == "scatter":
             x_target = SCATTER[self.color][0]
             y_target = SCATTER[self.color][1]
         else:
@@ -212,24 +303,25 @@ class Ghost(pygame.sprite.Sprite):
 
     # Direction is choosen in allowed directions
     def choose_direction(self):
-        if self.mode == "random":
+        if self.mode == "random" or self.mode == "jail":
             self.direction=random.choice(self.allowed_moves)
         elif self.mode == "chase" or self.mode == "runaway" or self.mode == "scatter":
             self.distance_based_direction()
 
     # Checks the free positions around the ghost
     def get_allowed_moves(self):
-        self.allowed_moves = self.moves.copy()
+        self.allowed_moves = []
 
-        # test if int = float
-        if MAP[self.y][self.x-1] >= 16:
-            self.allowed_moves.remove("left")
-        if self.x+1 < 28 and MAP[self.y][self.x+1] >= 16:
-            self.allowed_moves.remove("right")
-        if MAP[self.y - 1][self.x] >= 16:
-            self.allowed_moves.remove("up")
-        if MAP[self.y + 1][self.x] >= 16:
-            self.allowed_moves.remove("down")
+        # check walls
+        if MAP[self.y][self.x-1] < 16:
+            self.allowed_moves.append("left")
+        if self.x+1 < 28 and MAP[self.y][self.x+1] < 16:
+            self.allowed_moves.append("right")
+        # if in jail, and no more in jail mode, we can go outside
+        if MAP[self.y - 1][self.x] < 16 or (self.mode != "jail" and MAP[self.y - 1][self.x] == 17):
+            self.allowed_moves.append("up")
+        if MAP[self.y + 1][self.x] < 16:
+            self.allowed_moves.append("down")
 
         # By default : no turn back
         if not self.mode_changed:
@@ -243,8 +335,13 @@ class Ghost(pygame.sprite.Sprite):
         mode_time = TIMERS[self.color][self.mode]
         current_time = time.time()
         if current_time - self.start_time > mode_time:
-            if self.mode == "scatter":
+            self.old_mode = self.mode
+            if self.mode == "jail":
+                self.mode = "scatter"
+            elif self.mode == "scatter":
                 self.mode = "chase"
+            elif self.mode == "chase":
+                self.mode = "scatter"
             self.start_time = current_time
             self.mode_changed = True
         else:
@@ -256,8 +353,8 @@ class Ghost(pygame.sprite.Sprite):
         # change mode based on timer
         self.change_mode()
 
-        # Choose a direction only when we're on a MAP coordinates or chase mode changed
-        if self.mode_changed or (self.rect.x % 24 == 0 and self.rect.y % 24 ==0):
+        # Choose a direction only when we're on a MAP coordinates
+        if self.rect.x % 24 == 0 and self.rect.y % 24 ==0:
             self.x = int(self.rect.x / 24)
             self.y = int(self.rect.y / 24)
 
@@ -291,7 +388,7 @@ class Ghost(pygame.sprite.Sprite):
                 self.rect.y = 0
 
         # For debug
-        #print("color=",self.color, "x=",self.rect.x,"y=",self.rect.y, "mode=",self.mode, "f.direction=", self.direction, "allowed_moves=",self.allowed_moves, "distances=",self.distances)
+        #print("color=",self.color, "map_x=",self.x, "map_y=",self.y,"x=",self.rect.x,"y=",self.rect.y, "old mode=",self.old_mode, "mode=",self.mode, "f.direction=", self.direction, "allowed_moves=",self.allowed_moves, "distances=",self.distances)
 
 # Root code
 def main():
@@ -302,6 +399,12 @@ def main():
     global Ghosts
     global walls
     global surface
+    global score
+    global pacgums
+
+    pacgums = count_pacgums()
+
+    score = 0
 
     scale = 1
 
@@ -352,13 +455,13 @@ def main():
 
     Ghosts = []
     # declare the four ghosts
-    Ghosts.append(Ghost(12,11, "red", "scatter"))
-    Ghosts.append(Ghost(13,11, "blue", "scatter"))
-    Ghosts.append(Ghost(14,11,"yellow","scatter"))
-    Ghosts.append(Ghost(15,11,"pink","scatter"))
+    Ghosts.append(Ghost(14,14, "red", "jail"))
+    Ghosts.append(Ghost(13,14, "blue", "jail"))
+    Ghosts.append(Ghost(13,14,"yellow","jail"))
+    Ghosts.append(Ghost(15,14,"pink","jail"))
 
     # declare pacman
-    pacman = Pacman(14, 17)
+    pacman = Pacman(1, 29)
 
     all_sprites.add(pacman)
     all_sprites.add(Ghosts)
@@ -373,6 +476,7 @@ def main():
             # check for closing window
             if event.type == pygame.QUIT:
                 running = False
+
 
         # Update
         all_sprites.update()
@@ -398,7 +502,7 @@ def main():
 
         if collided():
             running = False
-
+            time.sleep(10)
     pygame.quit()
 
 if __name__ == "__main__":
