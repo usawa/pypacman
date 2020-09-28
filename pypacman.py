@@ -13,39 +13,43 @@ SCATTER = { "red": (1,1) ,
             "pink": (26,29)
 }
 
-TIMERS = {
+PACMAN_TIMERS = {
+    "normal": 999999999,
+    "chase": 8
+}
+GHOST_TIMERS = {
     "red": {
         "jail": 2,
         "scatter": 10,
         "chase": 15,
-        "runaway": 10,
+        "runaway": 8,
         "random": 10
     },
     "blue": {
-        "jail": 4,
+        "jail": 3,
         "scatter": 8,
         "chase": 15,
-        "runaway": 10,
+        "runaway": 8,
         "random": 10
     },
     "yellow": {
-        "jail": 6,
+        "jail": 5,
         "scatter": 10,
         "chase": 15,
-        "runaway": 10,
+        "runaway": 8,
         "random": 10
     },
     "pink": {
-        "jail": 8,
+        "jail": 6,
         "scatter": 12,
         "chase": 15,
-        "runaway": 10,
+        "runaway": 8,
         "random": 10
     }    
 }
 
 MAP = [     [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53], 
-            [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 51],
+            [50,  2,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2, 51],
             [50,  1, 34, 32, 32, 35,  1, 34, 32, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 32, 35,  1, 34, 32, 32, 35,  1, 51],
             [50,  1, 33,  0,  0, 33,  1, 33,  0,  0,  0, 33,  1, 33, 33,  1, 33,  0,  0,  0, 33,  1, 33,  0,  0, 33,  1, 51],
             [50,  1, 36, 32, 32, 37,  1, 36, 32, 32, 32, 37,  1, 36, 37,  1, 36, 32, 32, 32, 37,  1, 36, 32, 32, 37,  1, 51],
@@ -73,7 +77,7 @@ MAP = [     [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48,
             [50,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1, 51],
             [50,  1, 34, 32, 32, 32, 32, 37, 36, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 37, 36, 32, 32, 32, 32, 35,  1, 51], 
             [50,  1, 36, 32, 32, 32, 32, 32, 32, 32, 32, 37,  1, 36, 37,  1, 36, 32, 32, 32, 32, 32, 32, 32, 32, 37,  1, 51], 
-            [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 , 1 ,51], 
+            [50,  2,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 , 2 ,51], 
             [54, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 55], 
     ]
 
@@ -114,16 +118,11 @@ def display_map():
 def collided():
     collided = False
     # See if the player block has collided with anything.
-    hit_list = pygame.sprite.spritecollide(pacman, all_ghosts, True)
+    hit_list = pygame.sprite.spritecollide(pacman, all_ghosts, False, pygame.sprite.collide_circle)
  
     if len(hit_list):
         collided = True   
-    """
-    for f in Ghosts:
-        if f.x == pacman.x and f.y == pacman.y:
-            collided = True
-            break
-    """
+
     return collided
 
 
@@ -141,9 +140,17 @@ class Pacman(pygame.sprite.Sprite):
         self.rect.center = (self.x * 24 + 12 , self.y * 24 + 12)
         self.speed = 4
         self.direction = ""
+        self.old_mode = ""
         self.mode = "normal"
         self.allowed_moves = []
         self.count_moves = 0
+
+        # for the timers
+        self.start_time = time.time()
+        self.mode_changed = False
+
+        # for collisions
+        self.radius = 6
 
     # Check what moves are allowed from this position
     def get_allowed_moves(self):
@@ -159,14 +166,49 @@ class Pacman(pygame.sprite.Sprite):
         if MAP[self.y + 1][self.x] < 16:
             self.allowed_moves.append("down")
 
-    # Do we ate a pacgum ? Remove it from map and increment score
+    # Do we ate something ? Remove it from map, increment score, and could be mega pacgum
     def check_pacgums(self):
         global score
         global pacgums
-        if MAP[self.y][self.x] == 1:
+
+        # Single pacgum : 10
+        if MAP[self.y][self.x] ==1:
             score += 10
             MAP[self.y][self.x] = 0
             pacgums -= 1
+
+        # Big pacgum : 50 It's time to chase !
+        if MAP[self.y][self.x] == 2:
+            self.change_mode("chase")
+            score += 50
+            MAP[self.y][self.x] = 0
+            
+    def change_mode(self,mode = False):
+
+        self.changed_mode = False
+        current_time = time.time()
+
+        # Force mode at any time (e.g : chase mode)
+        if mode:
+            self.old_mode = self.mode
+            self.mode = mode
+            self.start_time = current_time
+            self.changed_mode = True
+            self.speed = 6
+            print("pacman mode changed to ",self.mode)
+
+        # rotate between modes
+        else:
+            mode_time = PACMAN_TIMERS[self.mode]
+            if current_time - self.start_time > mode_time:
+                self.old_mode = self.mode
+                if self.mode == "chase":
+                    self.mode = "normal"
+                    self.speed = 4
+                self.changed_mode = True
+        
+        if self.changed_mode:
+            print("Pacman mode changed to ",self.mode)
 
     # move pacman
     def update(self):
@@ -175,6 +217,8 @@ class Pacman(pygame.sprite.Sprite):
         if self.rect.x % 24 == 0 and self.rect.y % 24 == 0:
             self.x = int(self.rect.x / 24)
             self.y = int(self.rect.y / 24)
+
+            self.change_mode()
 
             self.check_pacgums()
 
@@ -253,6 +297,9 @@ class Ghost(pygame.sprite.Sprite):
         self.direction = ""
         self.speed = 4
         self.count_moves = 0
+
+        # for collisions
+        self.radius = 6
 
         # for the timers
         self.start_time = time.time()
@@ -353,20 +400,38 @@ class Ghost(pygame.sprite.Sprite):
 
     # Check time spent in current mode then change it based on a timer
     def change_mode(self):
-        mode_time = TIMERS[self.color][self.mode]
+
         current_time = time.time()
-        if current_time - self.start_time > mode_time:
+
+        # Force mode at any time (e.g : runaway mode) expect if in jail
+        if pacman.mode == "chase" and pacman.changed_mode == True:
             self.old_mode = self.mode
-            if self.mode == "jail":
-                self.mode = "scatter"
-            elif self.mode == "scatter":
-                self.mode = "chase"
-            elif self.mode == "chase":
-                self.mode = "scatter"
-            self.start_time = current_time
+            self.mode = "runaway"
             self.mode_changed = True
+            self.start_time = current_time
+            print(self.color,"mode changed to ",self.mode)
+#            self.get_allowed_moves()
+#            self.choose_direction()
+        
+        # rotate between modes
         else:
-            self.mode_changed = False
+            mode_time = GHOST_TIMERS[self.color][self.mode]
+            if current_time - self.start_time > mode_time:
+                self.old_mode = self.mode
+                if self.mode == "jail":
+                    self.mode = "scatter"
+                elif self.mode == "scatter":
+                    self.mode = "chase"
+                elif self.mode == "chase":
+                    self.mode = "scatter"
+                elif self.mode == "runaway":
+                    self.mode = "jail"
+                    GHOST_TIMERS[self.color]['jail'] = 0
+                self.start_time = current_time
+                self.mode_changed = True
+                print(self.color,"mode changed to ",self.mode)
+            else:
+                self.mode_changed = False
 
     # main function
     def update(self):
@@ -375,7 +440,7 @@ class Ghost(pygame.sprite.Sprite):
         self.change_mode()
 
         # Choose a direction only when we're on a MAP coordinates
-        if self.rect.x % 24 == 0 and self.rect.y % 24 ==0:
+        if self.rect.x % 24 == 0 and self.rect.y % 24 == 0:
             self.x = int(self.rect.x / 24)
             self.y = int(self.rect.y / 24)
 
@@ -411,7 +476,14 @@ class Ghost(pygame.sprite.Sprite):
             if self.rect.y > HEIGHT-12:
                 self.rect.y = 0
 
-        self.image = Ghost_pics[self.color][self.direction][self.count_moves % 2 + 1] 
+        if self.mode == "runaway":
+            current_time = time.time()
+            if GHOST_TIMERS[self.color]['runaway'] - (current_time - self.start_time) < 3:
+                self.image = Frightened_ghost_blinking[self.count_moves % 4 + 1] 
+            else:
+                self.image = Frightened_ghost[self.count_moves % 2 + 1] 
+        else:
+            self.image = Ghost_pics[self.color][self.direction][self.count_moves % 2 + 1] 
         self.image.set_colorkey(BLACK)
 
         # For debug
@@ -428,10 +500,13 @@ def display_text(surface, my_text):
 # Root code
 def main():
     global Pacman_pics
+    global Ghost_pics
+    global Frightened_ghost
+    global Frightened_ghost_blinking
+
     global pacman
     global all_ghosts
     global screen
-    global Ghost_pics
     global Ghosts
     global walls
     global surface
@@ -468,6 +543,16 @@ def main():
     # load ghost pictures
     game_folder = os.path.dirname(__file__)
     img_folder = os.path.join(game_folder, 'img')
+
+    Frightened_ghost = dict()
+    Frightened_ghost[1] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_1.png')).convert()
+    Frightened_ghost[2] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_2.png')).convert()
+
+    Frightened_ghost_blinking = dict()
+    Frightened_ghost_blinking[1] = Frightened_ghost[1]
+    Frightened_ghost_blinking[2] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_3.png')).convert()
+    Frightened_ghost_blinking[3] = Frightened_ghost[2]
+    Frightened_ghost_blinking[4] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_4.png')).convert()
 
     Ghost_pics = dict()
     for color in ('red','yellow','blue','pink'):
@@ -544,7 +629,10 @@ def main():
 
         # Collision test : must be enhanced
         if collided():
-            running = False
+            if pacman.mode =="chase":
+                score += 200
+            else:
+                running = False
             display_text(surface, "You lost !")
             
         # Scale ?
