@@ -434,7 +434,7 @@ def main():
     pacgums = count_pacgums()
     score = 0
 
-    scale = 1
+    scale = 0.75
 
     # initialize pygame and create window
     pygame.init()
@@ -444,14 +444,17 @@ def main():
     y_resolution = display_infos.current_h
 
     if y_resolution < 800:
-        scale = 1.5
+        scale = 0.75
 
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    SCALED_WIDTH = int(WIDTH*scale)
+    SCALED_HEIGHT = int(HEIGHT*scale)
+
+    screen = pygame.display.set_mode((SCALED_WIDTH, SCALED_HEIGHT))
     pygame.display.set_caption("Pacman by Slyce")
     
 
     # create a surface to work on
-    surface = pygame.Surface((int(WIDTH/scale), int(HEIGHT/scale)))
+    surface = pygame.Surface((WIDTH, HEIGHT))
 
     clock = pygame.time.Clock()
 
@@ -535,8 +538,8 @@ def main():
             display_text(surface, "You lost !")
             
         # Scale ?
-        if scale > 1:
-            frame = pygame.transform.scale(surface, (int(WIDTH/scale), int(HEIGHT/scale)))
+        if scale != 1:
+            frame = pygame.transform.scale(surface, ( SCALED_WIDTH, SCALED_HEIGHT ))
         else:
             frame = surface
 
