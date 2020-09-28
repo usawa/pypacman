@@ -113,11 +113,17 @@ def display_map():
     
 def collided():
     collided = False
+    # See if the player block has collided with anything.
+    hit_list = pygame.sprite.spritecollide(pacman, all_ghosts, True)
+ 
+    if len(hit_list):
+        collided = True   
+    """
     for f in Ghosts:
         if f.x == pacman.x and f.y == pacman.y:
             collided = True
             break
-
+    """
     return collided
 
 
@@ -423,6 +429,7 @@ def display_text(surface, my_text):
 def main():
     global Pacman_pics
     global pacman
+    global all_ghosts
     global screen
     global Ghost_pics
     global Ghosts
@@ -434,7 +441,7 @@ def main():
     pacgums = count_pacgums()
     score = 0
 
-    scale = 0.75
+    scale = 1
 
     # initialize pygame and create window
     pygame.init()
@@ -493,6 +500,7 @@ def main():
 
     # declare sprites
     all_sprites = pygame.sprite.Group()
+    all_ghosts = pygame.sprite.Group()
 
     Ghosts = []
     # declare the four ghosts
@@ -501,11 +509,13 @@ def main():
     Ghosts.append(Ghost(13,14,"yellow","jail"))
     Ghosts.append(Ghost(15,14,"pink","jail"))
 
+
     # declare pacman
     pacman = Pacman(14, 17)
 
     all_sprites.add(pacman)
     all_sprites.add(Ghosts)
+    all_ghosts.add(Ghosts)
 
     # Game loop
     running = True
