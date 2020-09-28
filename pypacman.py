@@ -178,6 +178,7 @@ class Pacman(pygame.sprite.Sprite):
             self.change_mode("chase")
             score += 50
             MAP[self.y][self.x] = 0
+            pacgums -= 1
             
     def change_mode(self,mode = False):
 
@@ -628,12 +629,17 @@ def main():
                     ghost.y = 15
                     ghost.rect.center = (ghost.x * 24 + 12 , ghost.y * 24 + 12)
                     ghost.mode = "jail"
-                    GHOST_TIMERS[ghost.color]['jail'] = random.randint(0,8)
+                    GHOST_TIMERS[ghost.color]['jail'] = random.randint(1,10)
                 score += 200
             else:
                 running = False
-            display_text(surface, "You lost !")
-            
+                display_text(surface, "You lost !")
+
+        # Won ?
+        if pacgums == 0:
+            running = False
+            display_text(surface, "You win !")
+
         # Scale ?
         if scale != 1:
             frame = pygame.transform.scale(surface, ( SCALED_WIDTH, SCALED_HEIGHT ))
@@ -646,6 +652,9 @@ def main():
 
         # *after* drawing everything, flip the display
         pygame.display.flip()
+
+    print("Remaining pacgums:", pacgums)
+    print("Score:", score)
 
     pygame.quit()
 
