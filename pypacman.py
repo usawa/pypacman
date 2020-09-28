@@ -116,14 +116,10 @@ def display_map():
                 surface.blit(walls[c],(x*24,y*24))
     
 def collided():
-    collided = False
     # See if the player block has collided with anything.
     hit_list = pygame.sprite.spritecollide(pacman, all_ghosts, False, pygame.sprite.collide_circle)
  
-    if len(hit_list):
-        collided = True   
-
-    return collided
+    return hit_list
 
 
 class Pacman(pygame.sprite.Sprite):
@@ -348,8 +344,8 @@ class Ghost(pygame.sprite.Sprite):
             # Pythagore, of course
             dist_x = abs(x - x_target)
             dist_y = abs(y - y_target)
-#            distance = round(math.sqrt(dist_x*dist_x + dist_y*dist_y))
-            distance = math.sqrt(dist_x*dist_x + dist_y*dist_y)
+            distance = round(math.sqrt(dist_x*dist_x + dist_y*dist_y))
+#            distance = math.sqrt(dist_x*dist_x + dist_y*dist_y)
             self.distances[direction] = distance
 
         if self.mode == "chase" or self.mode == "scatter":
@@ -569,10 +565,6 @@ def main():
         for i in range(1,4):
             Pacman_pics[direction][i] = pygame.image.load(os.path.join(img_folder, 'pacman_'+direction+'_'+str(i)+'.png')).convert()
 
-    pacman_pic = dict()
-    pacman_pic=['right']
-
-    pacman_pic = pygame.image.load(os.path.join(img_folder, 'pacman_right_1.png')).convert()
 
     # load walls based on values in MAP and if associated png exists
     walls = dict()
@@ -628,8 +620,15 @@ def main():
         all_sprites.draw(surface)
 
         # Collision test : must be enhanced
-        if collided():
+        hit_list = collided()
+        if hit_list:
             if pacman.mode =="chase":
+                for ghost in hit_list:
+                    ghost.x = 14
+                    ghost.y = 15
+                    ghost.rect.center = (ghost.x * 24 + 12 , ghost.y * 24 + 12)
+                    ghost.mode = "jail"
+                    GHOST_TIMERS[ghost.color]['jail'] = random.randint(0,8)
                 score += 200
             else:
                 running = False
