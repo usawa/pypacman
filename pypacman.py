@@ -77,15 +77,6 @@ MAP = [     [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48,
             [54, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 55], 
     ]
 
-WIDTH = len(MAP[0])*24
-HEIGHT = len(MAP)*24
-
-FULL_WIDTH = WIDTH
-FULL_HEIGHT = HEIGHT + 64 
-
-FULL_SCALED_WIDTH = 0
-FULL_SCALED_HEIGHT = 0
-
 FPS = 30
 
 # define colors
@@ -174,9 +165,9 @@ class Pacman(pygame.sprite.Sprite):
         chase = False
         # Single pacgum : 10
         if MAP[self.y][self.x] ==1:
-            score += 10
+            score = score + 10
             MAP[self.y][self.x] = 0
-            pacgums -= 1
+            pacgums = pacgums - 1
 
         # Big pacgum : 50 It's time to chase !
         if MAP[self.y][self.x] == 2:
@@ -565,6 +556,7 @@ def display_lifes(surface):
 def play():
     global score
     global lifes
+    global scale
 
     clock = pygame.time.Clock()
     # Game loop
@@ -584,13 +576,14 @@ def play():
 
         display_board_game()
 
-        frame = scale_output(fake_screen)
+#        frame = scale_output(fake_screen, scale)
 
-        # Surface on screen
-        screen.blit(frame, (0, 0))
+        # Everything on screen
+        screen.blit(scale_output(fake_screen, scale), (0, 0))
 
         # *after* drawing everything, flip the display
         pygame.display.flip()
+
 
         # Collision test
         hit_list = collided()
@@ -636,9 +629,7 @@ def display_board_game():
     fake_screen.blit(bottom,(0,HEIGHT+32))
 
 def loose_life():
-
-    loose_screen = pygame.display.set_mode((FULL_WIDTH, FULL_HEIGHT))
-
+    global scale
 
     i = 1
     while i<10:
@@ -657,22 +648,20 @@ def loose_life():
         # draw walls
         display_map()
 
-        # Draw sprites
-        # All_sprites.draw(surface)
         # Animate the dead pacman
         surface.blit(Dead_pacman[i], (pacman.rect.x, pacman.rect.y))
         display_lifes(bottom)
-        loose_screen.blit(top,(0,0))
-        loose_screen.blit(surface,(0,32))
-        loose_screen.blit(bottom,(0,HEIGHT+32))
+        fake_screen.blit(top,(0,0))
+        fake_screen.blit(surface,(0,32))
+        fake_screen.blit(bottom,(0,HEIGHT+32))
 
-        frame = scale_output(loose_screen)
-
-        screen.blit(frame, (0, 0))
+        screen.blit(scale_output(fake_screen, scale), (0, 0))
 
         # *after* drawing everything, flip the display
         pygame.display.flip()
         i += 1
+    
+    # Reinit everything
     pacman.reinit(14,17)
     for ghost in Ghosts:
         if ghost.color == "red":
@@ -684,12 +673,12 @@ def loose_life():
         if ghost.color == "pink":
             ghost.reinit(15,14,"jail")
 
-def scale_output(surface):
+def scale_output(my_surface,scale):
     # Scale ?
     if scale != 1:
-        frame = pygame.transform.scale(surface, ( FULL_SCALED_WIDTH, FULL_SCALED_HEIGHT ))
+        frame = pygame.transform.scale(my_surface, (int(FULL_WIDTH*scale), int(FULL_HEIGHT*scale)))
     else:
-        frame = surface
+        frame = my_surface
     return frame
  
 # Root code
@@ -705,13 +694,20 @@ def main():
     global pacgums
     global scale
     global lifes
+    global WIDTH, HEIGHT, FULL_WIDTH, FULL_HEIGHT
+
+    WIDTH = len(MAP[0])*24
+    HEIGHT = len(MAP)*24
+
+    FULL_WIDTH = WIDTH
+    FULL_HEIGHT = HEIGHT + 64 
 
     lifes = 3
 
     pacgums = count_pacgums()
     score = 0
 
-    scale = 0.75
+    scale = 1
 
     # initialize pygame and create window
     pygame.init()
@@ -725,11 +721,9 @@ def main():
     if y_resolution < 800:
         scale = 0.75
 
-    FULL_SCALED_WIDTH = int(FULL_WIDTH*scale)
-    FULL_SCALED_HEIGHT = int(FULL_HEIGHT*scale)
 
-    screen = pygame.display.set_mode((FULL_SCALED_WIDTH, FULL_SCALED_HEIGHT))
-    fake_screen = pygame.display.set_mode((FULL_WIDTH, FULL_HEIGHT))
+    screen = pygame.display.set_mode((int(FULL_WIDTH*scale), int(FULL_HEIGHT*scale)))
+    fake_screen = pygame.Surface((FULL_WIDTH, FULL_HEIGHT))
     pygame.display.set_caption("Pacman by Slyce")
     
     # create a surface to work on
@@ -737,7 +731,7 @@ def main():
     top = pygame.Surface((WIDTH, 32))
     bottom = pygame.Surface((WIDTH, 32))
 
-    # load bitmaps
+    # load bitmaps                                                                                                                               
     load_bitmaps()
 
     # declare sprites
@@ -748,8 +742,8 @@ def main():
     # declare the four ghosts
     Ghosts.append(Ghost(14,14, "red", "jail"))
     Ghosts.append(Ghost(13,14, "blue", "jail"))
-    Ghosts.append(Ghost(13,14,"yellow","jail"))
-    Ghosts.append(Ghost(15,14,"pink","jail"))
+    Ghosts.append(Ghost(13,14, "yellow","jail"))
+    Ghosts.append(Ghost(15,14, "pink","jail"))
 
 
     # Prepare runaway values
