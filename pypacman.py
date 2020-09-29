@@ -80,6 +80,12 @@ MAP = [     [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48,
 WIDTH = len(MAP[0])*24
 HEIGHT = len(MAP)*24
 
+FULL_WIDTH = WIDTH
+FULL_HEIGHT = HEIGHT + 64 
+
+FULL_SCALED_WIDTH = 0
+FULL_SCALED_HEIGHT = 0
+
 FPS = 30
 
 # define colors
@@ -123,6 +129,9 @@ class Pacman(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
 
+        self.reinit(x,y)
+
+    def reinit(self,x,y):
         self.x = x
         self.y = y
 
@@ -280,9 +289,13 @@ class Ghost(pygame.sprite.Sprite):
     def __init__(self, x, y, color, mode):
         pygame.sprite.Sprite.__init__(self)
 
+        self.color = color
+        self.reinit(x,y,mode)
+
+    def reinit(self,x,y,mode):
         self.x = x
         self.y = y
-        self.color = color
+
         self.mode = mode
         self.old_mode = ""
         self.distances = dict()
@@ -494,48 +507,13 @@ def display_text(surface, my_text):
     textRect.center = (int(WIDTH / 2), int(HEIGHT / 2)) 
     surface.blit(text, textRect)
 
-# Root code
-def main():
+def load_bitmaps():
     global Pacman_pics
+    global Dead_pacman
     global Ghost_pics
     global Frightened_ghost
     global Frightened_ghost_blinking
-
-    global pacman
-    global all_ghosts
-    global screen
-    global Ghosts
     global walls
-    global surface
-    global score
-    global pacgums
-
-    pacgums = count_pacgums()
-    score = 0
-
-    scale = 1
-
-    # initialize pygame and create window
-    pygame.init()
-    pygame.mixer.init()
-    display_infos = pygame.display.Info()
-
-    y_resolution = display_infos.current_h
-
-    if y_resolution < 800:
-        scale = 0.75
-
-    SCALED_WIDTH = int(WIDTH*scale)
-    SCALED_HEIGHT = int(HEIGHT*scale)
-
-    screen = pygame.display.set_mode((SCALED_WIDTH, SCALED_HEIGHT))
-    pygame.display.set_caption("Pacman by Slyce")
-    
-
-    # create a surface to work on
-    surface = pygame.Surface((WIDTH, HEIGHT))
-
-    clock = pygame.time.Clock()
 
     # load ghost pictures
     game_folder = os.path.dirname(__file__)
@@ -559,12 +537,17 @@ def main():
             for i in range(1,3):
                 Ghost_pics[color][direction][i] = pygame.image.load(os.path.join(img_folder, color+'_'+direction+'_ghost_'+str(i)+'.png')).convert()
 
-    # load pacman picture
+    # load pacman pictures
     Pacman_pics = dict()
     for direction in ('left','right','up','down'):
         Pacman_pics[direction] = dict()
         for i in range(1,4):
             Pacman_pics[direction][i] = pygame.image.load(os.path.join(img_folder, 'pacman_'+direction+'_'+str(i)+'.png')).convert()
+
+    # load dead pacman pictures
+    Dead_pacman = dict()
+    for i in range(1,11):
+        Dead_pacman[i] = pygame.image.load(os.path.join(img_folder, 'pacman_dead_'+str(i)+'.png')).convert()
 
     # load walls based on values in MAP and if associated png exists
     walls = dict()
@@ -574,6 +557,188 @@ def main():
                 png = os.path.join(img_folder, str(c) + ".png")
                 if(os.path.exists(png)):
                     walls[c] = pygame.image.load(png).convert()
+
+def display_lifes(surface):
+    for live in range(0, lifes - 1 ):
+        surface.blit(Pacman_pics['right'][2],(live*32+24,4))
+
+def play():
+    global score
+    global lifes
+
+    clock = pygame.time.Clock()
+    # Game loop
+    running = True
+    while running:
+
+        # keep loop running at the right speed
+        clock.tick(FPS)
+        # Process input (events)
+        for event in pygame.event.get():
+            # check for closing window
+            if event.type == pygame.QUIT:
+                running = False
+
+        pacman.update()
+        all_ghosts.update()
+
+        display_board_game()
+
+        frame = scale_output(fake_screen)
+
+        # Surface on screen
+        screen.blit(frame, (0, 0))
+
+        # *after* drawing everything, flip the display
+        pygame.display.flip()
+
+        # Collision test
+        hit_list = collided()
+        if hit_list:
+            if pacman.mode == "chase":
+                for ghost in hit_list:
+                    if ghost.mode == "runaway":
+                        ghost.x = 14
+                        ghost.y = 15
+                        ghost.rect.center = (ghost.x * 24 + 12 , ghost.y * 24 + 12)
+                        ghost.mode = "jail"
+                        GHOST_TIMERS[ghost.color]['jail'] = random.randint(1,10)
+                        score += 200
+                    else:
+                        lifes -= 1
+                        loose_life()
+            else:
+                lifes -= 1
+                loose_life()
+
+        # Won ?
+        if pacgums == 0:
+            running = False
+
+        if lifes == 0:
+            running = False
+
+def display_board_game():
+    # Draw all
+    surface.fill(BLACK)
+    top.fill(BLACK)
+    bottom.fill(BLACK)
+
+    # draw walls
+    display_map()
+
+    # Draw sprites
+    all_sprites.draw(surface)
+
+    display_lifes(bottom)
+    fake_screen.blit(top,(0,0))
+    fake_screen.blit(surface,(0,32))
+    fake_screen.blit(bottom,(0,HEIGHT+32))
+
+def loose_life():
+
+    loose_screen = pygame.display.set_mode((FULL_WIDTH, FULL_HEIGHT))
+
+
+    i = 1
+    while i<10:
+        print("In loop",i)
+        time.sleep(0.1)
+
+        # evaluate the pygame event
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                break
+        # Draw all
+        surface.fill(BLACK)
+        top.fill(BLACK)
+        bottom.fill(BLACK)
+
+        # draw walls
+        display_map()
+
+        # Draw sprites
+        # All_sprites.draw(surface)
+        # Animate the dead pacman
+        surface.blit(Dead_pacman[i], (pacman.rect.x, pacman.rect.y))
+        display_lifes(bottom)
+        loose_screen.blit(top,(0,0))
+        loose_screen.blit(surface,(0,32))
+        loose_screen.blit(bottom,(0,HEIGHT+32))
+
+        frame = scale_output(loose_screen)
+
+        screen.blit(frame, (0, 0))
+
+        # *after* drawing everything, flip the display
+        pygame.display.flip()
+        i += 1
+    pacman.reinit(14,17)
+    for ghost in Ghosts:
+        if ghost.color == "red":
+            ghost.reinit(14,14,"jail")
+        if ghost.color == "blue":
+            ghost.reinit(13,14,"jail")
+        if ghost.color == "yellow":
+            ghost.reinit(13,14,"jail")
+        if ghost.color == "pink":
+            ghost.reinit(15,14,"jail")
+
+def scale_output(surface):
+    # Scale ?
+    if scale != 1:
+        frame = pygame.transform.scale(surface, ( FULL_SCALED_WIDTH, FULL_SCALED_HEIGHT ))
+    else:
+        frame = surface
+    return frame
+ 
+# Root code
+def main():
+
+    global pacman
+    global all_ghosts
+    global all_sprites
+    global screen, fake_screen
+    global Ghosts
+    global surface, top, bottom
+    global score
+    global pacgums
+    global scale
+    global lifes
+
+    lifes = 3
+
+    pacgums = count_pacgums()
+    score = 0
+
+    scale = 0.75
+
+    # initialize pygame and create window
+    pygame.init()
+    pygame.mixer.init()
+
+    # Check vertical resolution
+    display_infos = pygame.display.Info()
+
+    y_resolution = display_infos.current_h
+
+    if y_resolution < 800:
+        scale = 0.75
+
+    FULL_SCALED_WIDTH = int(FULL_WIDTH*scale)
+    FULL_SCALED_HEIGHT = int(FULL_HEIGHT*scale)
+
+    screen = pygame.display.set_mode((FULL_SCALED_WIDTH, FULL_SCALED_HEIGHT))
+    fake_screen = pygame.display.set_mode((FULL_WIDTH, FULL_HEIGHT))
+    pygame.display.set_caption("Pacman by Slyce")
+    
+    # create a surface to work on
+    surface = pygame.Surface((WIDTH, HEIGHT))
+    top = pygame.Surface((WIDTH, 32))
+    bottom = pygame.Surface((WIDTH, 32))
+
+    # load bitmaps
+    load_bitmaps()
 
     # declare sprites
     all_sprites = pygame.sprite.Group()
@@ -598,62 +763,8 @@ def main():
     all_sprites.add(Ghosts)
     all_ghosts.add(Ghosts)
 
-    # Game loop
-    running = True
-    while running:
-
-        # keep loop running at the right speed
-        clock.tick(FPS)
-        # Process input (events)
-        for event in pygame.event.get():
-            # check for closing window
-            if event.type == pygame.QUIT:
-                running = False
-
-        pacman.update()
-        all_ghosts.update()
-
-        surface.fill(BLACK)
-
-        # Draw / render
-        # draw walls
-        display_map()
-
-        # Draw sprites
-        all_sprites.draw(surface)
-
-        # Collision test : must be enhanced
-        hit_list = collided()
-        if hit_list:
-            if pacman.mode =="chase":
-                for ghost in hit_list:
-                    ghost.x = 14
-                    ghost.y = 15
-                    ghost.rect.center = (ghost.x * 24 + 12 , ghost.y * 24 + 12)
-                    ghost.mode = "jail"
-                    GHOST_TIMERS[ghost.color]['jail'] = random.randint(1,10)
-                score += 200
-            else:
-                running = False
-                display_text(surface, "You lost !")
-
-        # Won ?
-        if pacgums == 0:
-            running = False
-            display_text(surface, "You win !")
-
-        # Scale ?
-        if scale != 1:
-            frame = pygame.transform.scale(surface, ( SCALED_WIDTH, SCALED_HEIGHT ))
-        else:
-            frame = surface
-
-        # Surface on screen
-        screen.blit(frame, (0, 0))
-
-        # *after* drawing everything, flip the display
-        pygame.display.flip()
-
+    play()
+        
     print("Remaining pacgums:", pacgums)
     print("Score:", score)
 
