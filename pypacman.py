@@ -22,28 +22,24 @@ GHOST_TIMERS = {
         "jail": 2,
         "scatter": 10,
         "chase": 15,
-        "runaway": 8,
         "random": 10
     },
     "blue": {
         "jail": 3,
         "scatter": 8,
         "chase": 15,
-        "runaway": 8,
         "random": 10
     },
     "yellow": {
         "jail": 5,
         "scatter": 10,
         "chase": 15,
-        "runaway": 8,
         "random": 10
     },
     "pink": {
         "jail": 6,
         "scatter": 12,
         "chase": 15,
-        "runaway": 8,
         "random": 10
     }    
 }
@@ -84,7 +80,7 @@ MAP = [     [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48,
 WIDTH = len(MAP[0])*24
 HEIGHT = len(MAP)*24
 
-FPS = 30
+FPS = 90
 
 # define colors
 WHITE = (255, 255, 255)
@@ -136,7 +132,6 @@ class Pacman(pygame.sprite.Sprite):
         self.rect.center = (self.x * 24 + 12 , self.y * 24 + 12)
         self.speed = 4
         self.direction = ""
-        self.old_mode = ""
         self.mode = "normal"
         self.allowed_moves = []
         self.count_moves = 0
@@ -167,6 +162,7 @@ class Pacman(pygame.sprite.Sprite):
         global score
         global pacgums
 
+        chase = False
         # Single pacgum : 10
         if MAP[self.y][self.x] ==1:
             score += 10
@@ -175,38 +171,40 @@ class Pacman(pygame.sprite.Sprite):
 
         # Big pacgum : 50 It's time to chase !
         if MAP[self.y][self.x] == 2:
-            self.change_mode("chase")
             score += 50
             MAP[self.y][self.x] = 0
             pacgums -= 1
-            
-    def change_mode(self,mode = False):
+            chase = True 
 
-        self.changed_mode = False
+        return chase
+
+    def change_mode(self):
+
+        self.mode_changed = False
         current_time = time.time()
 
-        # Force mode at any time (e.g : chase mode)
-        if mode:
-            self.old_mode = self.mode
-            self.mode = mode
+        # Enter chase mode 
+        if self.check_pacgums():
+            self.mode = "chase"
             self.start_time = current_time
-            self.changed_mode = True
             self.speed = 6
-            print("pacman mode changed to ",self.mode)
+            self.mode_changed = True
+            for ghost in Ghosts:
+                ghost.change_mode("runaway")
 
-        # rotate between modes
+        # rotate between modes based on timer
         else:
             mode_time = PACMAN_TIMERS[self.mode]
             if current_time - self.start_time > mode_time:
-                self.old_mode = self.mode
                 if self.mode == "chase":
                     self.mode = "normal"
                     self.speed = 4
-                self.changed_mode = True
-        
-        if self.changed_mode:
-            print("Pacman mode changed to ",self.mode)
+                self.start_time = current_time
+                self.mode_changed = True
 
+        if self.mode_changed:
+            print("Pacman mode changed to",self.mode)
+        
     # move pacman
     def update(self):
 
@@ -216,8 +214,6 @@ class Pacman(pygame.sprite.Sprite):
             self.y = int(self.rect.y / 24)
 
             self.change_mode()
-
-            self.check_pacgums()
 
             self.get_allowed_moves()
 
@@ -291,6 +287,7 @@ class Ghost(pygame.sprite.Sprite):
         self.old_mode = ""
         self.distances = dict()
         self.allowed_moves = []
+        self.forbid_turnback = True
         self.direction = ""
         self.speed = 4
         self.count_moves = 0
@@ -388,30 +385,27 @@ class Ghost(pygame.sprite.Sprite):
         if MAP[self.y + 1][self.x] < 16:
             self.allowed_moves.append("down")
 
-        # By default : no turn back
-        if not self.mode_changed:
-            if self.direction != "":
-                reverse=self.opposite[self.moves.index(self.direction)]
-                if reverse in self.allowed_moves:
-                    self.allowed_moves.remove(reverse)
+        # Remove opposition direction By default : no turn back
+        if self.forbid_turnback and self.direction != '':
+            reverse=self.opposite[self.moves.index(self.direction)]
+            if reverse in self.allowed_moves:
+                self.allowed_moves.remove(reverse)
 
     # Check time spent in current mode then change it based on a timer
-    def change_mode(self):
+    def change_mode(self,mode = False):
 
         current_time = time.time()
 
-        # Force mode at any time (e.g : runaway mode) expect if in jail
-        if pacman.mode == "chase" and pacman.changed_mode == True:
+        if mode == "runaway":
+            # start time of runaway is aways the same as pacman in chase
+            self.start_time = pacman.start_time 
             self.old_mode = self.mode
             self.mode = "runaway"
             self.mode_changed = True
-            self.start_time = current_time
-            print(self.color,"mode changed to ",self.mode)
-#            self.get_allowed_moves()
-#            self.choose_direction()
-        
-        # rotate between modes
-        else:
+            #self.get_allowed_moves()
+            #self.choose_direction()
+        else: 
+            # rotate between modes
             mode_time = GHOST_TIMERS[self.color][self.mode]
             if current_time - self.start_time > mode_time:
                 self.old_mode = self.mode
@@ -426,9 +420,12 @@ class Ghost(pygame.sprite.Sprite):
                     GHOST_TIMERS[self.color]['jail'] = 0
                 self.start_time = current_time
                 self.mode_changed = True
-                print(self.color,"mode changed to ",self.mode)
             else:
                 self.mode_changed = False
+
+        if self.mode_changed:
+            self.forbid_turnback = False
+            print(self.color,"mode changed to ",self.mode)
 
     # main function
     def update(self):
@@ -449,6 +446,9 @@ class Ghost(pygame.sprite.Sprite):
 
             # choose a direction, based on the ghost mode
             self.choose_direction()
+
+            # change mode alreay done, directino alreay set, we can forbid
+            self.forbid_turnback = True
 
         # Direction is set : move the ghost
         if self.direction == "left":
@@ -566,7 +566,6 @@ def main():
         for i in range(1,4):
             Pacman_pics[direction][i] = pygame.image.load(os.path.join(img_folder, 'pacman_'+direction+'_'+str(i)+'.png')).convert()
 
-
     # load walls based on values in MAP and if associated png exists
     walls = dict()
     for l in MAP:
@@ -588,6 +587,10 @@ def main():
     Ghosts.append(Ghost(15,14,"pink","jail"))
 
 
+    # Prepare runaway values
+    for ghost in Ghosts:
+        GHOST_TIMERS[ghost.color]['runaway'] = PACMAN_TIMERS['chase']
+
     # declare pacman
     pacman = Pacman(14, 17)
 
@@ -607,9 +610,8 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-
-        # Update
-        all_sprites.update()
+        pacman.update()
+        all_ghosts.update()
 
         surface.fill(BLACK)
 
@@ -645,7 +647,6 @@ def main():
             frame = pygame.transform.scale(surface, ( SCALED_WIDTH, SCALED_HEIGHT ))
         else:
             frame = surface
-
 
         # Surface on screen
         screen.blit(frame, (0, 0))
