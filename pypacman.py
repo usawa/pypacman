@@ -80,7 +80,7 @@ MAP = [     [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48,
 WIDTH = len(MAP[0])*24
 HEIGHT = len(MAP)*24
 
-FPS = 90
+FPS = 30
 
 # define colors
 WHITE = (255, 255, 255)
