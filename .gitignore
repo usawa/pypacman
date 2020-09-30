@@ -1,2 +1,2 @@
-.vscode
-sprites_sources
+.*
+!.gitignore
