@@ -198,6 +198,8 @@ class Pacman(pygame.sprite.Sprite):
             mode_time = PACMAN_TIMERS[self.mode]
             if current_time - self.start_time > mode_time:
                 if self.mode == "chase":
+                    # Reinit ghosts in a row counter
+                    self.game.ghosts_in_a_row = 0
                     self.mode = "normal"
                 self.start_time = current_time
                 self.mode_changed = True
@@ -341,15 +343,12 @@ class Ghost(pygame.sprite.Sprite):
         y = self.y
         self.distances = dict()
 
-        # Previously in jail: target just outside jail to go outside
-        # There's something to do here to avoid static values !
-        # awful hack
+        # Previously in jail: target to the up to force ghost to go outside
         if self.old_mode == "jail":
-            self.target = (14, 11)
-            # We're outside : go to normal coordinates
-            if self.y <= 11:
+            self.target = (14, 1)
+            # Once we're outside: we go to expected coordinates
+            if self.y <= self.game.jail_output:
                 self.old_mode = ""
-
         elif self.mode == "scatter":
             self.target = (SCATTER[self.color][0], SCATTER[self.color][1])
         elif self.mode == "to_jail":
@@ -469,7 +468,7 @@ class Ghost(pygame.sprite.Sprite):
 
         if self.mode_changed:
             self.forbid_turnback = False
-            print(self.color, "mode changed to ", self.mode)
+            #print(self.color, "mode changed to ", self.mode)
 
     # main function
     def update(self):
@@ -576,6 +575,18 @@ class Game:
 
         self.scale = 1
         self.FPS = 30 
+
+        # Search for prison door to determine coordinates
+        self.jail_output = None
+        y_length = len(MAP)
+        x_length = len(MAP[0])
+        for y in range(y_length):
+            for x in range(x_length):
+                if MAP[y][x] == 17:
+                    self.jail_output = y - 1
+                    break
+            if self.jail_output:
+                break
 
         # initialize pygame and create window
         pygame.init()
@@ -690,6 +701,8 @@ class Game:
         self.top.fill(BLACK)
         self.bottom.fill(BLACK)
 
+        # Score
+        self.display_text(self.top,"Player 1     Score: "+str(int(self.score)), 24, 6)
         # draw walls
         self.display_map(self.surface)
 
@@ -701,15 +714,13 @@ class Game:
         self.fake_screen.blit(self.surface, (0, 32))
         self.fake_screen.blit(self.bottom, (0, self.HEIGHT+32))
 
-    def display_text(self, my_surface, my_text):
+    def display_text(self, my_surface, my_text, pos_x, pos_y):
         """
         TBD: display a text
         """
-        font = pygame.font.Font('freesansbold.ttf', 32)
+        font = pygame.font.Font('RetroGaming.ttf', 18)
         text = font.render(my_text, True, WHITE)
-        textRect = text.get_rect()
-        textRect.center = (int(self.WIDTH / 2), int(self.HEIGHT / 2))
-        my_surface.blit(text, textRect)
+        my_surface.blit(text, (pos_x, pos_y))
 
     def display_lifes(self, my_surface):
         """
@@ -809,6 +820,8 @@ class Game:
         Main play function
         launch the game loop
         """
+        self.ghosts_in_a_row = 0
+
         clock = pygame.time.Clock()
         # Game loop
         running = True
@@ -841,7 +854,10 @@ class Game:
                     for ghost in hit_list:
                         if ghost.mode == "runaway":
                             ghost.change_mode("to_jail")
-                            self.score += 200
+                            self.ghosts_in_a_row += 1
+                            # Use a pow()
+                            ghost_score = 200*math.pow(2, self.ghosts_in_a_row-1)
+                            self.score += ghost_score
                         elif ghost.mode != "to_jail":
                             self.lifes -= 1
                             self.loose_life()
