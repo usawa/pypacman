@@ -299,6 +299,7 @@ class Ghost(pygame.sprite.Sprite):
         self.direction = None
         self.speed = None
         self.count_moves = None
+        self.blinking_tempo = None
         self.mode_changed = None
         self.start_time = None
         self.image = None
@@ -320,7 +321,7 @@ class Ghost(pygame.sprite.Sprite):
         self.forbid_turnback = True
         self.direction = ""
         self.speed = 4
-        self.count_moves = 0
+        self.blinking_tempo = 0
 
         # for collisions
         self.radius = 6
@@ -424,15 +425,17 @@ class Ghost(pygame.sprite.Sprite):
             self.allowed_moves.append("down")
 
         # Remove opposition direction By default : no turn back
-        if self.forbid_turnback and self.direction != '':
+        if self.direction != '':
             reverse = self.opposite[self.moves.index(self.direction)]
-            if reverse in self.allowed_moves:
+
+            if self.forbid_turnback and reverse in self.allowed_moves:
+                #if reverse in self.allowed_moves:
                 self.allowed_moves.remove(reverse)
 
-        # shouldn't happen
-        if len(self.allowed_moves) == 0:
-            print("ERROR !!!!", self.color, self.mode, self.rect.x, self.rect.y, self.x, self.y)
-            exit(0)
+            # It should happen only if a row line
+            if len(self.allowed_moves) == 0:
+                self.allowed_moves.append(reverse)
+
 
     # Check time spent in current mode then change it based on a timer
     def change_mode(self, new_mode=False):
@@ -479,13 +482,13 @@ class Ghost(pygame.sprite.Sprite):
         # change mode based on timer
         self.change_mode()
 
+        # For blinking temporisation in Frightened mode
+        self.blinking_tempo += 0.25
+
         # Choose a direction only when we're on a MAP coordinates
         if self.rect.x % 24 == 0 and self.rect.y % 24 == 0:
             self.x = int(self.rect.x / 24)
             self.y = int(self.rect.y / 24)
-
-            # We moved one case
-            self.count_moves += 1
 
             # Check if we're in to_jail and we are now on expected coordinates
             if self.mode == "to_jail" and self.x == JAIL[self.color][0] and self.y == JAIL[self.color][1]:
@@ -534,14 +537,15 @@ class Ghost(pygame.sprite.Sprite):
 
         if self.mode == "runaway":
             current_time = time.time()
+            # The last 3 seconds : blink
             if GHOST_TIMERS[self.color]['runaway'] - (current_time - self.start_time) < 3:
-                self.image = self.game.Frightened_ghost_blinking[self.count_moves % 4 + 1]
+                self.image = self.game.Frightened_ghost_blinking[int(self.blinking_tempo) % 4 + 1]
             else:
-                self.image = self.game.Frightened_ghost[self.count_moves % 2 + 1]
+                self.image = self.game.Frightened_ghost[int(self.blinking_tempo) % 2 + 1]
         elif self.mode == "to_jail":
             self.image = self.game.Ghost_eyes[self.direction]
         else:
-            self.image = self.game.Ghost_pics[self.color][self.direction][self.count_moves % 2 + 1]
+            self.image = self.game.Ghost_pics[self.color][self.direction][int(self.blinking_tempo) % 2 + 1]
         self.image.set_colorkey(BLACK)
 
         # For debug
@@ -561,6 +565,8 @@ class Game:
         self.Frightened_ghost = None
         self.Frightened_ghost_blinking = None
         self.Walls = None
+
+        self.ghosts_in_a_row = 0
 
         self.WIDTH = len(MAP[0])*24
         self.HEIGHT = len(MAP)*24
@@ -653,9 +659,9 @@ class Game:
         # frightened and blinking
         self.Frightened_ghost_blinking = dict()
         self.Frightened_ghost_blinking[1] = self.Frightened_ghost[1]
-        self.Frightened_ghost_blinking[2] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_3.png')).convert()
+        self.Frightened_ghost_blinking[2] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_4.png')).convert()
         self.Frightened_ghost_blinking[3] = self.Frightened_ghost[2]
-        self.Frightened_ghost_blinking[4] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_4.png')).convert()
+        self.Frightened_ghost_blinking[4] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_3.png')).convert()
 
         # Standard ones
         self.Ghost_pics = dict()
@@ -735,8 +741,7 @@ class Game:
         and reset everything
         """
         i = 1
-        while i < 10:
-            time.sleep(0.1)
+        while i < 15:
 
             # evaluate the pygame event
             for event in pygame.event.get():
@@ -751,7 +756,11 @@ class Game:
             self.display_map(self.surface)
 
             # Animate the dead pacman
-            self.surface.blit(self.Dead_pacman[i], (self.pacman.rect.x, self.pacman.rect.y))
+            if i<11:
+                self.surface.blit(self.Dead_pacman[i], (self.pacman.rect.x, self.pacman.rect.y))
+            else:
+                if i%2:
+                    self.surface.blit(self.Dead_pacman[10], (self.pacman.rect.x, self.pacman.rect.y))
             self.display_lifes(self.bottom)
             self.fake_screen.blit(self.top, (0, 0))
             self.fake_screen.blit(self.surface, (0, 32))
@@ -763,10 +772,14 @@ class Game:
             pygame.display.flip()
             i += 1
 
+            time.sleep(0.1)
+        pygame.display.update()
+
         # Reinit everything
         self.pacman.reinit(PACMAN_POS[0], PACMAN_POS[1])
         for ghost in self.Ghosts:
             ghost.reinit(JAIL[ghost.color][0], JAIL[ghost.color][1], "jail")
+
 
     def scale_output(self, my_surface, my_scale):
         """
@@ -821,6 +834,7 @@ class Game:
         launch the game loop
         """
         self.ghosts_in_a_row = 0
+        lives_gained = 0
 
         clock = pygame.time.Clock()
         # Game loop
@@ -837,6 +851,11 @@ class Game:
 
             self.pacman.update()
             self.all_ghosts.update()
+
+            # Add a life every 10000 points
+            if int(self.score ) / 10000 > lives_gained:
+                lives_gained += 1
+                self.lifes += 1
 
             self.display_board_game()
 
