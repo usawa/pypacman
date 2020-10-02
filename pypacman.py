@@ -72,7 +72,7 @@ MAP = [
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1, 56, 49, 49, 17, 17, 49, 49, 57,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
         [48, 48, 48, 48, 48, 58,  1, 36, 37,  1, 51, 64,  0,  0,  0,  0, 64, 50,  1, 36, 37,  1, 59, 48, 48, 48, 48, 48],
-        [ 0,  0,  0,  0,  0,  0,  1,  1,  1,  1, 51, 64,  0,  0,  0,  0, 64, 50,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0],
+        [15, 15, 15, 15, 15, 15,  1,  1,  1,  1, 51, 64,  0,  0,  0,  0, 64, 50,  1,  1,  1,  1, 15, 15, 15, 15, 15, 15],
         [49, 49, 49, 49, 49, 57,  1, 34, 35,  1, 51, 64,  0,  0,  0,  0, 64, 50,  1, 34, 35,  1, 56, 49, 49, 49, 49, 49],
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1, 59, 48, 48, 48, 48, 48, 48, 58,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
@@ -290,12 +290,15 @@ class Ghost(pygame.sprite.Sprite):
         self.game = my_game
         self.x = None
         self.y = None
+        self.real_x = None
+        self.real_y = None
         self.color = color
         self.mode = None
         self.old_mode = None
         self.distances = None
         self.allowed_moves = None
         self.forbid_turnback = None
+        self.in_tunnel = None
         self.direction = None
         self.speed = None
         self.count_moves = None
@@ -313,7 +316,6 @@ class Ghost(pygame.sprite.Sprite):
         """
         self.x = x
         self.y = y
-
         self.mode = mode
         self.old_mode = ""
         self.distances = dict()
@@ -322,6 +324,7 @@ class Ghost(pygame.sprite.Sprite):
         self.direction = ""
         self.speed = 4
         self.blinking_tempo = 0
+        self.in_tunnel = False
 
         # for collisions
         self.radius = 6
@@ -330,10 +333,14 @@ class Ghost(pygame.sprite.Sprite):
         self.start_time = time.time()
         self.mode_changed = False
 
+
         self.image = self.game.Ghost_pics[self.color]['left'][1]
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 + 12, self.y * 24 + 12)
+
+        self.real_x = self.x * 24 + 12
+        self.real_y = self.y * 24 + 12
 
     # In chase or runaway modes, we calculate distance between ghost and pacman
     def distance_based_direction(self):
@@ -479,6 +486,7 @@ class Ghost(pygame.sprite.Sprite):
         Update the ghost status and position
         main control
         """
+
         # change mode based on timer
         self.change_mode()
 
@@ -487,6 +495,7 @@ class Ghost(pygame.sprite.Sprite):
 
         # Choose a direction only when we're on a MAP coordinates
         if self.rect.x % 24 == 0 and self.rect.y % 24 == 0:
+
             self.x = int(self.rect.x / 24)
             self.y = int(self.rect.y / 24)
 
@@ -503,37 +512,78 @@ class Ghost(pygame.sprite.Sprite):
             # change mode alreay done, directino alreay set, we can forbid
             self.forbid_turnback = True
 
+            """
+            Allowed speeds:
+            1       24 moves to the next position
+            2       12
+            2.1818  11
+            2.4     10
+            3        8
+            3.4285   7
+            4        6
+            4.8      5
+            6        4
+            8        3
+            12       2
+            24       1
+            """
 
             # new speed ?
             if self.mode == "to_jail":
                 self.speed = 12
             elif self.mode == "runaway":
                 self.speed = 2
+            elif self.mode == "chase":
+                if self.color == "red":
+                    if self.speed == 4:
+                        self.speed = 4.8
+                    else:
+                        self.speed = 4
+                else:
+                    self.speed = 4
             else:
                 self.speed = 4
 
+            # in tunnel reduce speed to 2
+            if MAP[self.y][self.x] == 15:
+                if not self.in_tunnel:
+                    self.in_tunnel = True
+            else:
+                self.in_tunnel = False
+
+            if self.in_tunnel:
+                self.speed = 2
+
         # Direction is set : move the ghost
         if self.direction == "left":
-            self.rect.x -= self.speed
+            self.real_x -= self.speed
+            self.rect.x = round(self.real_x)
             # go to right border
-            if self.rect.x < 0:
+            if self.rect.x < -12 :
                 self.rect.x = self.game.WIDTH-12
+                self.real_x = self.rect.x
 
         if self.direction == "right":
-            self.rect.x += self.speed
+            self.real_x += self.speed
+            self.rect.x = round(self.real_x)
             # go to left border
-            if self.rect.x > self.game.WIDTH-12:
-                self.rect.x = 0
+            if self.rect.x >= self.game.WIDTH:
+                self.rect.x = -12
+                self.real_x = -12
 
         if self.direction == "up":
-            self.rect.y -= self.speed
+            self.real_y -= self.speed
+            self.rect.y = round(self.real_y)
             if self.rect.y < 0:
                 self.rect.y = self.game.HEIGHT-12
+                self.real_y = self.rect.y
 
         if self.direction == "down":
-            self.rect.y += self.speed
-            if self.rect.y > self.game.HEIGHT-12:
+            self.real_y += self.speed
+            self.rect.y = round(self.real_y)
+            if self.rect.y >= self.game.HEIGHT:
                 self.rect.y = 0
+                self.real_y = 0
 
         if self.mode == "runaway":
             current_time = time.time()
