@@ -11,6 +11,16 @@ import math
 import os
 import pygame
 
+FRUITS_SCORES = {   "cherry": 100,
+                    "strawberry": 300,
+                    "orange": 500,
+                    "apple": 700,
+                    "melon": 1000,
+                    "galboss": 2000,
+                    "bell": 3000,
+                    "key": 5000
+}
+
 SCATTER = { "red": (1,1) ,
             "blue": (26,1),
             "yellow": (1,29),
@@ -31,6 +41,15 @@ PACMAN_TIMERS = {
 PACMAN_POS = (14, 17)
 
 GHOST_TIMERS = {
+    "cherry":      { "none": 999999999 },
+    "orange":      { "none": 999999999 },
+    "melon":       { "none": 999999999 },
+    "strawberry":  { "none": 999999999 },
+    "apple":       { "none": 999999999 },
+    "galboss":     { "none": 999999999 },
+    "key":         { "none": 999999999 },
+    "bell":        { "none": 999999999 },
+
     "red": {
         "jail": 3,
         "scatter": 10,
@@ -59,35 +78,35 @@ GHOST_TIMERS = {
 
 MAP = [
         [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53],
-        [50,  2,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2, 51],
-        [50,  1, 34, 32, 32, 35,  1, 34, 32, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 32, 35,  1, 34, 32, 32, 35,  1, 51],
-        [50,  1, 33,  0,  0, 33,  1, 33,  0,  0,  0, 33,  1, 33, 33,  1, 33,  0,  0,  0, 33,  1, 33,  0,  0, 33,  1, 51],
+        [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 51],
+        [50,  2, 34, 32, 32, 35,  1, 34, 32, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 32, 35,  1, 34, 32, 32, 35,  1, 51],
+        [50,  1, 33,  0,  0, 33,  1, 33,  0,  0,  0, 33,  1, 33, 33,  1, 33,  0,  0,  0, 33,  1, 33,  0,  0, 33,  2, 51],
         [50,  1, 36, 32, 32, 37,  1, 36, 32, 32, 32, 37,  1, 36, 37,  1, 36, 32, 32, 32, 37,  1, 36, 32, 32, 37,  1, 51],
         [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 51],
         [50,  1, 34, 32, 32, 35,  1, 34, 35,  1, 34, 32, 32, 32, 32, 32, 32, 35,  1, 34, 35,  1, 34, 32, 32, 35,  1, 51],
         [50,  1, 36, 32, 32, 37,  1, 33, 33,  1, 36, 32, 32, 35, 34, 32, 32, 37,  1, 33, 33,  1, 36, 32, 32, 37,  1, 51],
         [50,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1, 51],
-        [54, 49, 49, 49, 49, 57,  1, 33, 36, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 37, 33,  1, 56, 49, 49, 49, 49, 55],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 34, 32, 32, 37,  1, 36, 37,  1, 36, 32, 32, 35, 33,  1, 51,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1, 56, 49, 49, 17, 17, 49, 49, 57,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-        [48, 48, 48, 48, 48, 58,  1, 36, 37,  1, 51, 64,  0,  0,  0,  0, 64, 50,  1, 36, 37,  1, 59, 48, 48, 48, 48, 48],
-        [15, 15, 15, 15, 15, 15,  1,  1,  1,  1, 51, 64,  0,  0,  0,  0, 64, 50,  1,  1,  1,  1, 15, 15, 15, 15, 15, 15],
-        [49, 49, 49, 49, 49, 57,  1, 34, 35,  1, 51, 64,  0,  0,  0,  0, 64, 50,  1, 34, 35,  1, 56, 49, 49, 49, 49, 49],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1, 59, 48, 48, 48, 48, 48, 48, 58,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  1, 34, 32, 32, 32, 32, 32, 32, 35,  1, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-        [52, 48, 48, 48, 48, 58,  1, 36, 37,  1, 36, 32, 32, 35, 34, 32, 32, 37,  1, 36, 37,  1, 59, 48, 48, 48, 48, 53],
+        [54, 49, 49, 49, 49, 57,  1, 33, 36, 32, 32, 35,  0, 33, 33,  0, 34, 32, 32, 37, 33,  1, 56, 49, 49, 49, 49, 55],
+        [ 0,  0,  0,  0,  0, 50,  1, 33, 34, 32, 32, 37,  0, 36, 37,  0, 36, 32, 32, 35, 33,  1, 51,  0,  0,  0,  0,  0],
+        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
+        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 56, 49, 49, 17, 17, 49, 49, 57,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
+        [48, 48, 48, 48, 48, 58,  1, 36, 37,  0, 51, 64,  0,  0,  0,  0, 64, 50,  0, 36, 37,  1, 59, 48, 48, 48, 48, 48],
+        [15, 15, 15, 15, 15, 15,  1,  0,  0,  0, 51, 64,  0,  0,  0,  0, 64, 50,  0,  0,  0,  1, 15, 15, 15, 15, 15, 15],
+        [49, 49, 49, 49, 49, 57,  1, 34, 35,  0, 51, 64,  0,  0,  0,  0, 64, 50,  0, 34, 35,  1, 56, 49, 49, 49, 49, 49],
+        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 59, 48, 48, 48, 48, 48, 48, 58,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
+        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
+        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 34, 32, 32, 32, 32, 32, 32, 35,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
+        [52, 48, 48, 48, 48, 58,  1, 36, 37,  0, 36, 32, 32, 35, 34, 32, 32, 37,  0, 36, 37,  1, 59, 48, 48, 48, 48, 53],
         [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 51],
         [50,  1, 34, 32, 32, 35,  1, 34, 32, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 32, 35,  1, 34, 32, 32, 35,  1, 51],
         [50,  1, 36, 32, 35, 33,  1, 36, 32, 32, 32, 37,  1, 36, 37,  1, 36, 32, 32, 32, 37,  1, 33, 34, 32, 37,  1, 51],
-        [50,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1, 51],
+        [50,  2,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  2, 51],
         [54, 32, 35,  1, 33, 33,  1, 34, 35,  1, 34, 32, 32, 32, 32, 32, 32, 35,  1, 34, 35,  1, 33, 33,  1, 34, 32, 55],
         [52, 32, 37,  1, 36, 37,  1, 33, 33,  1, 36, 32, 32, 35, 34, 32, 32, 37,  1, 33, 33,  1, 36, 37,  1, 36, 32, 53],
         [50,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1, 51],
         [50,  1, 34, 32, 32, 32, 32, 37, 36, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 37, 36, 32, 32, 32, 32, 35,  1, 51],
         [50,  1, 36, 32, 32, 32, 32, 32, 32, 32, 32, 37,  1, 36, 37,  1, 36, 32, 32, 32, 32, 32, 32, 32, 32, 37,  1, 51],
-        [50,  2,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 , 2 ,51],
+        [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 , 1 ,51],
         [54, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 55]
 ]
 
@@ -137,7 +156,7 @@ class Pacman(pygame.sprite.Sprite):
         self.mode_changed = False
 
         # for collisions
-        self.radius = 6
+        self.radius = 3
 
     # Check what moves are allowed from this position
     def get_allowed_moves(self):
@@ -327,14 +346,17 @@ class Ghost(pygame.sprite.Sprite):
         self.in_tunnel = False
 
         # for collisions
-        self.radius = 6
+        self.radius = 3
 
         # for the timers
         self.start_time = time.time()
         self.mode_changed = False
 
 
-        self.image = self.game.Ghost_pics[self.color]['left'][1]
+        if self.color in ('red', 'yellow', 'blue', 'pink'):
+            self.image = self.game.Ghost_pics[self.color]['left'][1]
+        else:
+            self.image = self.game.Bonuses[self.color]
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 + 12, self.y * 24 + 12)
@@ -585,18 +607,19 @@ class Ghost(pygame.sprite.Sprite):
                 self.rect.y = 0
                 self.real_y = 0
 
-        if self.mode == "runaway":
-            current_time = time.time()
-            # The last 3 seconds : blink
-            if GHOST_TIMERS[self.color]['runaway'] - (current_time - self.start_time) < 3:
-                self.image = self.game.Frightened_ghost_blinking[int(self.blinking_tempo) % 4 + 1]
+        if self.color in ('red', 'yellow', 'blue', 'pink'):
+            if self.mode == "runaway":
+                current_time = time.time()
+                # The last 3 seconds : blink
+                if GHOST_TIMERS[self.color]['runaway'] - (current_time - self.start_time) < 3:
+                    self.image = self.game.Frightened_ghost_blinking[int(self.blinking_tempo) % 4 + 1]
+                else:
+                    self.image = self.game.Frightened_ghost[int(self.blinking_tempo) % 2 + 1]
+            elif self.mode == "to_jail":
+                self.image = self.game.Ghost_eyes[self.direction]
             else:
-                self.image = self.game.Frightened_ghost[int(self.blinking_tempo) % 2 + 1]
-        elif self.mode == "to_jail":
-            self.image = self.game.Ghost_eyes[self.direction]
-        else:
-            self.image = self.game.Ghost_pics[self.color][self.direction][int(self.blinking_tempo) % 2 + 1]
-        self.image.set_colorkey(BLACK)
+                self.image = self.game.Ghost_pics[self.color][self.direction][int(self.blinking_tempo) % 2 + 1]
+            self.image.set_colorkey(BLACK)
 
         # For debug
         #print("color=",self.color, "map_x=",self.x, "map_y=",self.y,"x=",self.rect.x,"y=",self.rect.y, "old mode=",self.old_mode, "mode=",self.mode, "f.direction=", self.direction, "allowed_moves=",self.allowed_moves, "distances=",self.distances)
@@ -615,7 +638,7 @@ class Game:
         self.Frightened_ghost = None
         self.Frightened_ghost_blinking = None
         self.Walls = None
-
+        self.Bonuses = None
         self.ghosts_in_a_row = 0
 
         self.WIDTH = len(MAP[0])*24
@@ -631,6 +654,8 @@ class Game:
 
         self.scale = 1
         self.FPS = 30 
+
+        self.count_loops = 0
 
         # Search for prison door to determine coordinates
         self.jail_output = None
@@ -671,6 +696,9 @@ class Game:
         # declare sprites
         self.all_sprites = pygame.sprite.Group()
         self.all_ghosts = pygame.sprite.Group()
+
+        # Bonus
+        self.bonus = None
 
         self.Ghosts = []
         # declare the four ghosts
@@ -738,6 +766,12 @@ class Game:
         self.Dead_pacman = dict()
         for i in range(1, 11):
             self.Dead_pacman[i] = pygame.image.load(os.path.join(img_folder, 'pacman_dead_'+str(i)+'.png')).convert()
+
+        # Bonuses
+        self.Bonuses = dict()
+        for bonus in ('apple', 'bell', 'cherry', 'galboss', 'key', 'melon', 'orange', 'strawberry'):
+            self.Bonuses[bonus] = pygame.image.load(os.path.join(img_folder, bonus+'.png')).convert()
+            
 
         # load walls based on values in MAP and if associated png exists
         self.Walls = dict()
@@ -867,7 +901,12 @@ class Game:
             for x in range(x_length):
                 c = MAP[y][x]
                 if c in self.Walls:
-                    my_surface.blit(self.Walls[c], (x*24, y*24))
+                    if c != 2:
+                        my_surface.blit(self.Walls[c], (x*24, y*24))
+                    else:
+                        if self.count_loops%8 in range(0,3):
+                            my_surface.blit(self.Walls[c], (x*24, y*24))
+
 
     def collided(self):
         """
@@ -878,6 +917,23 @@ class Game:
 
         return hit_list
 
+    def manage_bonus(self):
+        """ 
+        Bonus is a 'false' ghost
+        """
+
+        bonus_set = False        
+        allowed_bonuses = ("cherry")
+
+        # There can't be two bonuses at the same time
+        if not bonus_set:
+            if self.pacgums < 200:
+                bonus_set = True
+                self.bonus = Ghost(self, 14, 17, "cherry", "none")
+                self.Ghosts.append(self.bonus)
+                self.all_sprites.add(self.bonus)
+                self.all_ghosts.add(self.bonus)
+
     def play(self):
         """
         Main play function
@@ -886,10 +942,13 @@ class Game:
         self.ghosts_in_a_row = 0
         lives_gained = 0
 
+        
         clock = pygame.time.Clock()
         # Game loop
         running = True
+        self.count_loops = 0
         while running:
+            self.count_loops += 1
 
             # keep loop running at the right speed
             clock.tick(self.FPS)
@@ -906,6 +965,9 @@ class Game:
             if int(self.score ) / 10000 > lives_gained:
                 lives_gained += 1
                 self.lifes += 1
+
+            # Display or remove bonus
+            #self.manage_bonus()
 
             self.display_board_game()
 
@@ -930,10 +992,9 @@ class Game:
                         elif ghost.mode != "to_jail":
                             self.lifes -= 1
                             self.loose_life()
-                else:
-                    if self.pacman.mode != "to_jail":
-                        self.lifes -= 1
-                        self.loose_life()
+                elif self.pacman.mode != "to_jail":
+                    self.lifes -= 1
+                    self.loose_life()
 
             # Won ?
             if self.pacgums == 0:
