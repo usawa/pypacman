@@ -51,9 +51,9 @@ GHOST_TIMERS = {
     "bell":        { "none": 999999999 },
 
     "red": {
-        "jail": 3,
+        "jail": 0,
         "scatter": 10,
-        "chase": 15,
+        "chase": 10,
         "random": 10
     },
     "blue": {
@@ -69,8 +69,9 @@ GHOST_TIMERS = {
         "random": 10
     },
     "pink": {
-        "jail": 6,
-        "scatter": 12,
+        "jail": 0,
+        "ambush":40,
+        "scatter": 5,
         "chase": 15,
         "random": 10
     }
@@ -407,14 +408,14 @@ class Ghost(pygame.sprite.Sprite):
             distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
             self.distances[direction] = distance
 
-        if self.mode in ("chase", "scatter", "to_jail"):
+        if self.mode in ("chase", "scatter", "to_jail", "ambush"):
             min_dist = 99999999999
         elif self.mode == "runaway":
             min_dist = -1
 
         for key, value in self.distances.items():
             # In chase mode : select the nearest direction
-            if self.mode in ("chase", "scatter", "to_jail"):
+            if self.mode in ("chase", "scatter", "to_jail", "ambush"):
                 if value < min_dist:
                     min_dist = value
                     self.direction = key
@@ -423,6 +424,18 @@ class Ghost(pygame.sprite.Sprite):
                 if value > min_dist:
                     min_dist = value
                     self.direction = key
+
+    # Ambush mode
+    def pacman_based_direction(self):
+        """ 
+        Implement the ambush mode for pinky.
+        - Try to go to the same direction if pacman is behind
+        else try to catch pacman
+        """
+        if self.game.pacman.direction in self.allowed_moves:
+            self.direction = self.game.pacman.direction
+        else:
+            self.distance_based_direction()
 
     # Direction is choosen in allowed directions
     def choose_direction(self):
@@ -433,6 +446,8 @@ class Ghost(pygame.sprite.Sprite):
             self.direction = random.choice(self.allowed_moves)
         elif self.mode in ("chase", "runaway", "scatter", "to_jail"):
             self.distance_based_direction()
+        elif self.mode == "ambush":
+            self.pacman_based_direction()
 
     # Checks the free positions around the ghost
     def get_allowed_moves(self):
@@ -488,7 +503,10 @@ class Ghost(pygame.sprite.Sprite):
                 if self.mode == "jail":
                     self.mode = "scatter"
                 elif self.mode == "scatter":
-                    self.mode = "chase"
+                    if self.color == "pink":
+                        self.mode == "ambush"
+                    else:
+                        self.mode = "chase"
                 elif self.mode == "chase":
                     self.mode = "scatter"
                 elif self.mode == "runaway":
