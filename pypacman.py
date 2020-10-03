@@ -22,9 +22,9 @@ FRUITS_SCORES = {   "cherry": 100,
 }
 
 SCATTER = { "red": (1,1) ,
-            "blue": (26,1),
+            "blue": (26,29),
             "yellow": (1,29),
-            "pink": (26,29)
+            "pink": (26,1)
 }
 
 JAIL = { "red": (12,14) ,
@@ -365,6 +365,23 @@ class Ghost(pygame.sprite.Sprite):
         self.real_x = self.x * 24 + 12
         self.real_y = self.y * 24 + 12
 
+    def get_ambush_direction(self):
+
+        if self.game.pacman.direction == "left":
+            ambush_x = self.game.pacman.x - 4
+            ambush_y = self.game.pacman.y
+        elif self.game.pacman.direction == "right":
+            ambush_x = self.game.pacman.x + 4
+            ambush_y = self.game.pacman.y
+        elif self.game.pacman.direction == "down":
+            ambush_x = self.game.pacman.x
+            ambush_y = self.game.pacman.y + 4
+        else:
+            ambush_x = self.game.pacman.x - 4
+            ambush_y = self.game.pacman.y - 4
+    
+        self.target = (ambush_x, ambush_y)
+
     # In chase or runaway modes, we calculate distance between ghost and pacman
     def distance_based_direction(self):
         """
@@ -384,9 +401,13 @@ class Ghost(pygame.sprite.Sprite):
             self.target = (SCATTER[self.color][0], SCATTER[self.color][1])
         elif self.mode == "to_jail":
             self.target = (JAIL[self.color][0], JAIL[self.color][1])
+        elif self.mode == "ambush":
+            self.get_ambush_direction()
+            # Ambush mode for pinky
         else:
             self.target = (self.game.pacman.x, self.game.pacman.y)
 
+        print(self.color,"target=",self.target, "pacman=",self.game.pacman.x, self.game.pacman.y)
         # We calculate for each possible moves
         for direction in self.allowed_moves:
             x = self.x
@@ -425,18 +446,6 @@ class Ghost(pygame.sprite.Sprite):
                     min_dist = value
                     self.direction = key
 
-    # Ambush mode
-    def pacman_based_direction(self):
-        """ 
-        Implement the ambush mode for pinky.
-        - Try to go to the same direction if pacman is behind
-        else try to catch pacman
-        """
-        if self.game.pacman.direction in self.allowed_moves:
-            self.direction = self.game.pacman.direction
-        else:
-            self.distance_based_direction()
-
     # Direction is choosen in allowed directions
     def choose_direction(self):
         """
@@ -444,10 +453,8 @@ class Ghost(pygame.sprite.Sprite):
         """
         if self.mode in ("random", "jail"):
             self.direction = random.choice(self.allowed_moves)
-        elif self.mode in ("chase", "runaway", "scatter", "to_jail"):
+        elif self.mode in ("chase", "runaway", "scatter", "to_jail", "ambush"):
             self.distance_based_direction()
-        elif self.mode == "ambush":
-            self.pacman_based_direction()
 
     # Checks the free positions around the ghost
     def get_allowed_moves(self):
@@ -503,11 +510,14 @@ class Ghost(pygame.sprite.Sprite):
                 if self.mode == "jail":
                     self.mode = "scatter"
                 elif self.mode == "scatter":
+                    # pink chase is ambush mode
                     if self.color == "pink":
-                        self.mode == "ambush"
+                        self.mode = "ambush"
                     else:
                         self.mode = "chase"
                 elif self.mode == "chase":
+                    self.mode = "scatter"
+                elif self.mode == "ambush":
                     self.mode = "scatter"
                 elif self.mode == "runaway":
                     self.mode = "jail"
@@ -518,7 +528,7 @@ class Ghost(pygame.sprite.Sprite):
 
         if self.mode_changed:
             self.forbid_turnback = False
-            #print(self.color, "mode changed to ", self.mode)
+            print(self.color, "mode changed to ", self.mode)
 
     # main function
     def update(self):
@@ -575,10 +585,11 @@ class Ghost(pygame.sprite.Sprite):
                 self.speed = 2
             elif self.mode == "chase":
                 if self.color == "red":
-                    if self.speed == 4:
-                        self.speed = 4.8
-                    else:
-                        self.speed = 4
+                    #if self.speed == 4:
+                    #    self.speed = 4.8
+                    #else:
+                    #    self.speed = 4
+                    self.speed = 4
                 else:
                     self.speed = 4
             else:
@@ -722,6 +733,7 @@ class Game:
         # declare the four ghosts
         for color in ("red", "blue", "yellow", "pink"):
             self.Ghosts.append(Ghost(self, JAIL[color][0], JAIL[color][1], color, "jail"))
+        #self.Ghosts.append(Ghost(self, JAIL['pink'][0], JAIL['pink'][1], 'pink', "jail"))
 
         # Prepare runaway values
         for ghost in self.Ghosts:
