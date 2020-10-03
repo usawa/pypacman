@@ -11,6 +11,44 @@ import math
 import os
 import pygame
 
+LEVELS = dict()
+
+LEVELS[1] = [
+    ['scatter', 7 ],
+    [ 'chase', 20 ],
+    [ 'scatter', 7 ],
+    [ 'chase', 20 ],
+    [ 'scatter', 7 ],
+    [ 'chase', 20 ],
+    [ 'scatter', 5 ],
+    [ 'chase', 9999999 ]
+]
+
+LEVELS[2] = [
+    ['scatter', 7 ],
+    [ 'chase', 20 ],
+    [ 'scatter', 7 ],
+    [ 'chase', 20 ],
+    [ 'scatter', 5 ],
+    [ 'chase', 1033.14 ],
+    [ 'scatter', 0.01 ],
+    [ 'chase', 9999999 ]
+]
+
+LEVELS[3] = LEVELS[2]
+LEVELS[4] = LEVELS[2]
+
+LEVELS[5] = [
+    ['scatter', 5 ],
+    [ 'chase', 20 ],
+    [ 'scatter', 5 ],
+    [ 'chase', 20 ],
+    [ 'scatter', 5 ],
+    [ 'chase', 1037.14 ],
+    [ 'scatter', 0.01 ],
+    [ 'chase', 9999999 ]
+]
+
 FRUITS_SCORES = {   "cherry": 100,
                     "strawberry": 300,
                     "orange": 500,
@@ -21,10 +59,10 @@ FRUITS_SCORES = {   "cherry": 100,
                     "key": 5000
 }
 
-SCATTER = { "red": (1,1) ,
+SCATTER = { "red": (26,1) ,
             "blue": (26,29),
             "yellow": (1,29),
-            "pink": (26,1)
+            "pink": (1,1)
 }
 
 JAIL = { "red": (12,14) ,
@@ -33,49 +71,13 @@ JAIL = { "red": (12,14) ,
          "pink": (15,14)
 }
 
+
 PACMAN_TIMERS = {
     "normal": 999999999,
     "chase": 8
 }
 
 PACMAN_POS = (14, 17)
-
-GHOST_TIMERS = {
-    "cherry":      { "none": 999999999 },
-    "orange":      { "none": 999999999 },
-    "melon":       { "none": 999999999 },
-    "strawberry":  { "none": 999999999 },
-    "apple":       { "none": 999999999 },
-    "galboss":     { "none": 999999999 },
-    "key":         { "none": 999999999 },
-    "bell":        { "none": 999999999 },
-
-    "red": {
-        "jail": 0,
-        "scatter": 10,
-        "chase": 10,
-        "random": 10
-    },
-    "blue": {
-        "jail": 4,
-        "scatter": 8,
-        "chase": 15,
-        "random": 10
-    },
-    "yellow": {
-        "jail": 5,
-        "scatter": 10,
-        "chase": 15,
-        "random": 10
-    },
-    "pink": {
-        "jail": 0,
-        "ambush":40,
-        "scatter": 5,
-        "chase": 15,
-        "random": 10
-    }
-}
 
 MAP = [
         [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53],
@@ -91,7 +93,7 @@ MAP = [
         [ 0,  0,  0,  0,  0, 50,  1, 33, 34, 32, 32, 37,  0, 36, 37,  0, 36, 32, 32, 35, 33,  1, 51,  0,  0,  0,  0,  0],
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 56, 49, 49, 17, 17, 49, 49, 57,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-        [48, 48, 48, 48, 48, 58,  1, 36, 37,  0, 51, 64,  0,  0,  0,  0, 64, 50,  0, 36, 37,  1, 59, 48, 48, 48, 48, 48],
+        [48, 48, 48, 48, 48, 58,  1, 36, 37,  0, 51, 64, 64,  0,  0, 64, 64, 50,  0, 36, 37,  1, 59, 48, 48, 48, 48, 48],
         [15, 15, 15, 15, 15, 15,  1,  0,  0,  0, 51, 64,  0,  0,  0,  0, 64, 50,  0,  0,  0,  1, 15, 15, 15, 15, 15, 15],
         [49, 49, 49, 49, 49, 57,  1, 34, 35,  0, 51, 64,  0,  0,  0,  0, 64, 50,  0, 34, 35,  1, 56, 49, 49, 49, 49, 49],
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 59, 48, 48, 48, 48, 48, 48, 58,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
@@ -210,7 +212,7 @@ class Pacman(pygame.sprite.Sprite):
             self.start_time = current_time
             self.mode_changed = True
             for ghost in self.game.Ghosts:
-                if ghost.mode != "to_jail":
+                if ghost.mode != "eaten":
                     ghost.change_mode("runaway")
 
         # rotate between modes based on timer
@@ -365,7 +367,7 @@ class Ghost(pygame.sprite.Sprite):
         self.real_x = self.x * 24 + 12
         self.real_y = self.y * 24 + 12
 
-    def get_ambush_direction(self):
+    def get_pinky_ambush_direction(self):
 
         if self.game.pacman.direction == "left":
             ambush_x = self.game.pacman.x - 4
@@ -382,8 +384,29 @@ class Ghost(pygame.sprite.Sprite):
     
         self.target = (ambush_x, ambush_y)
 
+    def get_inky_ambush_direction(self):
+        # Two tiles from pacman
+        if self.game.pacman.direction == "left":
+            ambush_x = self.game.pacman.x - 2
+            ambush_y = self.game.pacman.y
+        elif self.game.pacman.direction == "right":
+            ambush_x = self.game.pacman.x + 2
+            ambush_y = self.game.pacman.y
+        elif self.game.pacman.direction == "down":
+            ambush_x = self.game.pacman.x
+            ambush_y = self.game.pacman.y + 2
+        else:
+            ambush_x = self.game.pacman.x - 2
+            ambush_y = self.game.pacman.y - 2
+
+        # Then, opposite direction from blinky (red) to this point
+        ambush_x = ambush_x + ( self.game.red.x - ambush_x )
+        ambush_y = ambush_y + ( self.game.red.y - ambush_y )
+
+        self.target = (ambush_x, ambush_y)
+
     # In chase or runaway modes, we calculate distance between ghost and pacman
-    def distance_based_direction(self):
+    def choose_direction(self):
         """
         calculate a direction based on the distance with pacman
         """
@@ -391,23 +414,22 @@ class Ghost(pygame.sprite.Sprite):
         y = self.y
         self.distances = dict()
 
-        # Previously in jail: target to the up to force ghost to go outside
-        if self.old_mode == "jail":
-            self.target = (14, 1)
-            # Once we're outside: we go to expected coordinates
-            if self.y <= self.game.jail_output:
-                self.old_mode = ""
-        elif self.mode == "scatter":
+        if self.mode == "scatter":
             self.target = (SCATTER[self.color][0], SCATTER[self.color][1])
-        elif self.mode == "to_jail":
+        elif self.mode == "eaten":
             self.target = (JAIL[self.color][0], JAIL[self.color][1])
-        elif self.mode == "ambush":
-            self.get_ambush_direction()
-            # Ambush mode for pinky
-        else:
-            self.target = (self.game.pacman.x, self.game.pacman.y)
-
-        print(self.color,"target=",self.target, "pacman=",self.game.pacman.x, self.game.pacman.y)
+        elif self.mode == "chase":
+            if self.color == "pink":
+                self.get_pinky_ambush_direction()
+            elif self.color == "blue":
+                self.get_inky_ambush_direction()
+            elif self.color == "red":
+                self.target = (self.game.pacman.x, self.game.pacman.y)
+            else:
+                self.target = (self.game.pacman.x, self.game.pacman.y)
+        
+        if self.color == "yellow":
+            print(self.color,"target=",self.target, "pacman=",self.game.pacman.x, self.game.pacman.y)
         # We calculate for each possible moves
         for direction in self.allowed_moves:
             x = self.x
@@ -429,14 +451,14 @@ class Ghost(pygame.sprite.Sprite):
             distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
             self.distances[direction] = distance
 
-        if self.mode in ("chase", "scatter", "to_jail", "ambush"):
+        if self.mode in ("chase", "scatter", "eaten", "jail"):
             min_dist = 99999999999
         elif self.mode == "runaway":
             min_dist = -1
 
         for key, value in self.distances.items():
             # In chase mode : select the nearest direction
-            if self.mode in ("chase", "scatter", "to_jail", "ambush"):
+            if self.mode in ("chase", "scatter", "eaten" , "jail"):
                 if value < min_dist:
                     min_dist = value
                     self.direction = key
@@ -446,15 +468,6 @@ class Ghost(pygame.sprite.Sprite):
                     min_dist = value
                     self.direction = key
 
-    # Direction is choosen in allowed directions
-    def choose_direction(self):
-        """
-        Based on current mode, make a choice of the movement algorithm
-        """
-        if self.mode in ("random", "jail"):
-            self.direction = random.choice(self.allowed_moves)
-        elif self.mode in ("chase", "runaway", "scatter", "to_jail", "ambush"):
-            self.distance_based_direction()
 
     # Checks the free positions around the ghost
     def get_allowed_moves(self):
@@ -469,10 +482,11 @@ class Ghost(pygame.sprite.Sprite):
         # Problems with right tunnel : a ghost can go there
         if (self.x+1 < 28 and MAP[self.y][self.x+1] < 16) or self.x+1 == 28:
             self.allowed_moves.append("right")
-        # if in jail, and no more in jail mode, we can go outside
+        # if not in jail mode , we can go outside
         if MAP[self.y - 1][self.x] < 16 or (self.mode != "jail" and MAP[self.y - 1][self.x] == 17):
             self.allowed_moves.append("up")
-        if MAP[self.y + 1][self.x] < 16 or (self.mode == "to_jail" and MAP[self.y + 1][self.x] == 17):
+        # You can only enter in jail in eaten mode
+        if MAP[self.y + 1][self.x] < 16 or (self.mode == "eaten" and MAP[self.y + 1][self.x] == 17):
             self.allowed_moves.append("down")
 
         # Remove opposition direction By default : no turn back
@@ -493,7 +507,7 @@ class Ghost(pygame.sprite.Sprite):
         """
         Change the current move mode, based on a timer or a given value
         """
-        current_time = time.time()
+        self.mode_changed = False
 
         if new_mode:
             # start time of runaway is aways the same as pacman in chase
@@ -503,30 +517,21 @@ class Ghost(pygame.sprite.Sprite):
             self.mode_changed = True
 
         else:
-            # rotate between modes
-            mode_time = GHOST_TIMERS[self.color][self.mode]
-            if current_time - self.start_time > mode_time:
-                self.old_mode = self.mode
-                if self.mode == "jail":
-                    self.mode = "scatter"
-                elif self.mode == "scatter":
-                    # pink chase is ambush mode
-                    if self.color == "pink":
-                        self.mode = "ambush"
-                    else:
-                        self.mode = "chase"
-                elif self.mode == "chase":
-                    self.mode = "scatter"
-                elif self.mode == "ambush":
-                    self.mode = "scatter"
-                elif self.mode == "runaway":
-                    self.mode = "jail"
-                self.start_time = current_time
-                self.mode_changed = True
-            else:
-                self.mode_changed = False
+            # Modes are managed by game loop
+
+            # Runaway is sync with pacman current status
+            if self.mode == 'runaway':
+                if self.game.pacman.mode != 'chase':
+                    self.mode = LEVELS[self.game.level][self.game.current_mode_idx][0]
+
+            if self.mode not in ('eaten', 'runaway'):
+                self.mode = LEVELS[self.game.level][self.game.current_mode_idx][0]
+                if self.old_mode != self.mode:
+                    self.mode_changed = True
+                    self.old_mode = self.mode
 
         if self.mode_changed:
+            self.start_time = time.time()
             self.forbid_turnback = False
             print(self.color, "mode changed to ", self.mode)
 
@@ -549,13 +554,13 @@ class Ghost(pygame.sprite.Sprite):
             self.x = int(self.rect.x / 24)
             self.y = int(self.rect.y / 24)
 
-            # Check if we're in to_jail and we are now on expected coordinates
-            if self.mode == "to_jail" and self.x == JAIL[self.color][0] and self.y == JAIL[self.color][1]:
+            # Check if we're in eaten and we are now on expected coordinates
+            if self.mode == "eaten" and self.x == JAIL[self.color][0] and self.y == JAIL[self.color][1]:
                 self.reinit(JAIL[self.color][0], JAIL[self.color][1], "jail")
 
             # What are the allowed moves ?
             self.get_allowed_moves()
-
+            
             # choose a direction, based on the ghost mode
             self.choose_direction()
 
@@ -579,7 +584,7 @@ class Ghost(pygame.sprite.Sprite):
             """
 
             # new speed ?
-            if self.mode == "to_jail":
+            if self.mode == "eaten":
                 self.speed = 12
             elif self.mode == "runaway":
                 self.speed = 2
@@ -636,19 +641,18 @@ class Ghost(pygame.sprite.Sprite):
                 self.rect.y = 0
                 self.real_y = 0
 
-        if self.color in ('red', 'yellow', 'blue', 'pink'):
-            if self.mode == "runaway":
-                current_time = time.time()
-                # The last 3 seconds : blink
-                if GHOST_TIMERS[self.color]['runaway'] - (current_time - self.start_time) < 3:
-                    self.image = self.game.Frightened_ghost_blinking[int(self.blinking_tempo) % 4 + 1]
-                else:
-                    self.image = self.game.Frightened_ghost[int(self.blinking_tempo) % 2 + 1]
-            elif self.mode == "to_jail":
-                self.image = self.game.Ghost_eyes[self.direction]
+        if self.mode == "runaway":
+            current_time = time.time()
+            # The last 3 seconds : blink
+            if PACMAN_TIMERS['chase'] - (current_time - self.start_time) < 3:
+                self.image = self.game.Frightened_ghost_blinking[int(self.blinking_tempo) % 4 + 1]
             else:
-                self.image = self.game.Ghost_pics[self.color][self.direction][int(self.blinking_tempo) % 2 + 1]
-            self.image.set_colorkey(BLACK)
+                self.image = self.game.Frightened_ghost[int(self.blinking_tempo) % 2 + 1]
+        elif self.mode == "eaten":
+            self.image = self.game.Ghost_eyes[self.direction]
+        else:
+            self.image = self.game.Ghost_pics[self.color][self.direction][int(self.blinking_tempo) % 2 + 1]
+        self.image.set_colorkey(BLACK)
 
         # For debug
         #print("color=",self.color, "map_x=",self.x, "map_y=",self.y,"x=",self.rect.x,"y=",self.rect.y, "old mode=",self.old_mode, "mode=",self.mode, "f.direction=", self.direction, "allowed_moves=",self.allowed_moves, "distances=",self.distances)
@@ -670,6 +674,12 @@ class Game:
         self.Bonuses = None
         self.ghosts_in_a_row = 0
 
+        # ghosts are set using setattr but pylint is yelling...
+        self.pink = None
+        self.red = None
+        self.blue = None
+        self.yellow = None
+
         self.WIDTH = len(MAP[0])*24
         self.HEIGHT = len(MAP)*24
 
@@ -686,17 +696,12 @@ class Game:
 
         self.count_loops = 0
 
-        # Search for prison door to determine coordinates
-        self.jail_output = None
-        y_length = len(MAP)
-        x_length = len(MAP[0])
-        for y in range(y_length):
-            for x in range(x_length):
-                if MAP[y][x] == 17:
-                    self.jail_output = y - 1
-                    break
-            if self.jail_output:
-                break
+        self.level = 0
+
+
+        self.start_mode_timer = None
+        self.current_mode_idx = 0
+        self.current_mode = None
 
         # initialize pygame and create window
         pygame.init()
@@ -729,19 +734,17 @@ class Game:
         # Bonus
         self.bonus = None
 
+        self.red = Ghost(self, 13, 11, 'red', "scatter")
+        for color in ("blue", "yellow", "pink"):
+
+            setattr(self, color, Ghost(self, JAIL[color][0], JAIL[color][1], color, "jail") )
+
         self.Ghosts = []
-        # declare the four ghosts
-        for color in ("red", "blue", "yellow", "pink"):
-            self.Ghosts.append(Ghost(self, JAIL[color][0], JAIL[color][1], color, "jail"))
-        #self.Ghosts.append(Ghost(self, JAIL['pink'][0], JAIL['pink'][1], 'pink', "jail"))
 
-        # Prepare runaway values
-        for ghost in self.Ghosts:
-            GHOST_TIMERS[ghost.color]['runaway'] = PACMAN_TIMERS['chase']
-
-        # Prepare to_jail values : no real timer, so 99999
-        for ghost in self.Ghosts:
-            GHOST_TIMERS[ghost.color]['to_jail'] = 99999
+        self.Ghosts.append(self.pink)
+        self.Ghosts.append(self.red)
+        self.Ghosts.append(self.yellow)
+        self.Ghosts.append(self.blue)
 
         # declare pacman
         self.pacman = Pacman(self, PACMAN_POS[0], PACMAN_POS[1])
@@ -977,17 +980,34 @@ class Game:
         # Game loop
         running = True
         self.count_loops = 0
-        while running:
-            self.count_loops += 1
+
+        # increment level
+        self.level += 1
+
+        self.current_mode_idx = 0
+        self.current_mode = LEVELS[self.level][self.current_mode_idx][0]
+        self.start_mode_timer = time.time()
+
+        while running:        
 
             # keep loop running at the right speed
             clock.tick(self.FPS)
+
+            self.count_loops += 1
+
             # Process input (events)
             for event in pygame.event.get():
                 # check for closing window
                 if event.type == pygame.QUIT:
                     running = False
 
+            # check if it's time to change mode
+            current_time = time.time()
+            if current_time - self.start_mode_timer > LEVELS[self.level][self.current_mode_idx][1]:
+                self.start_mode_timer = current_time 
+                self.current_mode_idx += 1
+                self.current_mode = LEVELS[self.level][self.current_mode_idx][0]
+            
             self.pacman.update()
             self.all_ghosts.update()
 
@@ -995,9 +1015,6 @@ class Game:
             if int(self.score ) / 10000 > lives_gained:
                 lives_gained += 1
                 self.lifes += 1
-
-            # Display or remove bonus
-            #self.manage_bonus()
 
             self.display_board_game()
 
@@ -1014,17 +1031,19 @@ class Game:
                 if self.pacman.mode == "chase":
                     for ghost in hit_list:
                         if ghost.mode == "runaway":
-                            ghost.change_mode("to_jail")
+                            ghost.change_mode("eaten")
                             self.ghosts_in_a_row += 1
                             # Use a pow()
                             ghost_score = 200*math.pow(2, self.ghosts_in_a_row-1)
                             self.score += ghost_score
-                        elif ghost.mode != "to_jail":
+                        elif ghost.mode != "eaten":
                             self.lifes -= 1
                             self.loose_life()
-                elif self.pacman.mode != "to_jail":
+                            self.current_mode_idx = 0
+                elif self.pacman.mode != "eaten":
                     self.lifes -= 1
                     self.loose_life()
+                    self.current_mode_idx = 0
 
             # Won ?
             if self.pacgums == 0:
@@ -1039,6 +1058,7 @@ def main():
     """
     main code to call the game
     """
+
     game = Game()
 
     # Play the game
