@@ -79,6 +79,13 @@ PACMAN_TIMERS = {
 
 PACMAN_POS = (14, 17)
 
+FORBIDDEN_UP = [
+    (12, 10),
+    (15, 10),
+    (12, 22),
+    (15, 22)
+]
+
 MAP = [
         [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53],
         [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 51],
@@ -95,7 +102,7 @@ MAP = [
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 56, 49, 49, 17, 17, 49, 49, 57,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
         [48, 48, 48, 48, 48, 58,  1, 36, 37,  0, 51, 64, 64,  0,  0, 64, 64, 50,  0, 36, 37,  1, 59, 48, 48, 48, 48, 48],
         [15, 15, 15, 15, 15, 15,  1,  0,  0,  0, 51, 64,  0,  0,  0,  0, 64, 50,  0,  0,  0,  1, 15, 15, 15, 15, 15, 15],
-        [49, 49, 49, 49, 49, 57,  1, 34, 35,  0, 51, 64,  0,  0,  0,  0, 64, 50,  0, 34, 35,  1, 56, 49, 49, 49, 49, 49],
+        [49, 49, 49, 49, 49, 57,  1, 34, 35,  0, 51, 64, 64, 64, 64, 64, 64, 50,  0, 34, 35,  1, 56, 49, 49, 49, 49, 49],
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 59, 48, 48, 48, 48, 48, 48, 58,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
         [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 34, 32, 32, 32, 32, 32, 32, 35,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
@@ -259,7 +266,6 @@ class Pacman(pygame.sprite.Sprite):
                 if self.y + 1 < 30 and MAP[self.y + 1][self.x] < 16:
                     self.direction = "down"
 
-        #print("Pacman: self.x=",self.x, "self.y=",self.y, "allowed_moves=",self.allowed_moves)
         # Direction is set : move the ghost
         moved = False
 
@@ -367,8 +373,11 @@ class Ghost(pygame.sprite.Sprite):
         self.real_x = self.x * 24 + 12
         self.real_y = self.y * 24 + 12
 
+    # Pinky is pink
     def get_pinky_ambush_direction(self):
-
+        """
+        Pinky will go 4 tiles from pacman, depending its direction
+        """
         if self.game.pacman.direction == "left":
             ambush_x = self.game.pacman.x - 4
             ambush_y = self.game.pacman.y
@@ -384,8 +393,12 @@ class Ghost(pygame.sprite.Sprite):
     
         self.target = (ambush_x, ambush_y)
 
+    # Inky is blue
     def get_inky_ambush_direction(self):
-        # Two tiles from pacman
+        """
+        Inky will go to the opposite position 
+        between Blinky (red) and two tiles from pacman
+        """
         if self.game.pacman.direction == "left":
             ambush_x = self.game.pacman.x - 2
             ambush_y = self.game.pacman.y
@@ -405,6 +418,21 @@ class Ghost(pygame.sprite.Sprite):
 
         self.target = (ambush_x, ambush_y)
 
+    # Clyde is yellow
+    def get_clyde_sneaking_direction(self):
+        """
+        Clyde (yellow) will chase pacman until it's too close.
+        At less than 8 tiles, its direction becomes the scatter one
+        """
+        # Pythagore, of course
+        dist_x = abs(self.x - self.game.pacman.x)
+        dist_y = abs(self.y - self.game.pacman.y)
+        distance = math.sqrt(dist_x**2 + dist_y**2)
+        if distance >= 8:
+            self.target = (self.game.pacman.x, self.game.pacman.y)
+        else:
+            self.target = (SCATTER[self.color][0], SCATTER[self.color][1])
+
     # In chase or runaway modes, we calculate distance between ghost and pacman
     def choose_direction(self):
         """
@@ -423,13 +451,15 @@ class Ghost(pygame.sprite.Sprite):
                 self.get_pinky_ambush_direction()
             elif self.color == "blue":
                 self.get_inky_ambush_direction()
+            elif self.color == "yellow":
+                self.get_clyde_sneaking_direction()
             elif self.color == "red":
                 self.target = (self.game.pacman.x, self.game.pacman.y)
             else:
+                # Should never happen
                 self.target = (self.game.pacman.x, self.game.pacman.y)
         
-        if self.color == "yellow":
-            print(self.color,"target=",self.target, "pacman=",self.game.pacman.x, self.game.pacman.y)
+        #print(self.color,"target=",self.target, "pacman=",self.game.pacman.x, self.game.pacman.y)
         # We calculate for each possible moves
         for direction in self.allowed_moves:
             x = self.x
@@ -448,7 +478,7 @@ class Ghost(pygame.sprite.Sprite):
             dist_x = abs(x - self.target[0])
             dist_y = abs(y - self.target[1])
             #distance = round(math.sqrt(dist_x * dist_x + dist_y * dist_y))
-            distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+            distance = math.sqrt(dist_x**2 + dist_y**2)
             self.distances[direction] = distance
 
         if self.mode in ("chase", "scatter", "eaten", "jail"):
@@ -488,6 +518,13 @@ class Ghost(pygame.sprite.Sprite):
         # You can only enter in jail in eaten mode
         if MAP[self.y + 1][self.x] < 16 or (self.mode == "eaten" and MAP[self.y + 1][self.x] == 17):
             self.allowed_moves.append("down")
+
+        # In some positions ghist isn't allowed to go up
+        if 'up' in self.allowed_moves:
+            for position in FORBIDDEN_UP:
+                if self.x == position[0] and self.y-1 == position[1]:
+                    self.allowed_moves.remove('up')
+                    break
 
         # Remove opposition direction By default : no turn back
         if self.direction != '':
@@ -532,7 +569,8 @@ class Ghost(pygame.sprite.Sprite):
 
         if self.mode_changed:
             self.start_time = time.time()
-            self.forbid_turnback = False
+            if self.mode != 'scatter':
+                self.forbid_turnback = False
             print(self.color, "mode changed to ", self.mode)
 
     # main function
@@ -653,9 +691,6 @@ class Ghost(pygame.sprite.Sprite):
         else:
             self.image = self.game.Ghost_pics[self.color][self.direction][int(self.blinking_tempo) % 2 + 1]
         self.image.set_colorkey(BLACK)
-
-        # For debug
-        #print("color=",self.color, "map_x=",self.x, "map_y=",self.y,"x=",self.rect.x,"y=",self.rect.y, "old mode=",self.old_mode, "mode=",self.mode, "f.direction=", self.direction, "allowed_moves=",self.allowed_moves, "distances=",self.distances)
 
 
 class Game:
