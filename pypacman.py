@@ -152,7 +152,6 @@ class Pacman(pygame.sprite.Sprite):
         self.y = y
 
         self.image = self.game.Pacman_pics['left'][1]
-        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 + 12, self.y * 24 + 12)
         self.speed = 4
@@ -303,7 +302,6 @@ class Pacman(pygame.sprite.Sprite):
                 self.image = self.game.Pacman_pics[self.direction][self.count_moves % 3 + 1]
             else:
                 self.image = self.game.Pacman_pics[self.direction][2]
-            self.image.set_colorkey(BLACK)
 
 class Ghost(pygame.sprite.Sprite):
     """
@@ -366,7 +364,6 @@ class Ghost(pygame.sprite.Sprite):
             self.image = self.game.Ghost_pics[self.color]['left'][1]
         else:
             self.image = self.game.Bonuses[self.color]
-        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 + 12, self.y * 24 + 12)
 
@@ -695,8 +692,6 @@ class Ghost(pygame.sprite.Sprite):
             self.image = self.game.Ghost_eyes[self.direction]
         else:
             self.image = self.game.Ghost_pics[self.color][self.direction][int(self.blinking_tempo) % 2 + 1]
-        self.image.set_colorkey(BLACK)
-
 
 class Game:
     """
@@ -708,6 +703,7 @@ class Game:
         self.Dead_pacman = None
         self.Ghost_pics = None
         self.Ghost_eyes = None
+        self.Ghost_scores = None
         self.Frightened_ghost = None
         self.Frightened_ghost_blinking = None
         self.Walls = None
@@ -806,6 +802,8 @@ class Game:
         self.Frightened_ghost = dict()
         self.Frightened_ghost[1] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_1.png')).convert()
         self.Frightened_ghost[2] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_2.png')).convert()
+        self.Frightened_ghost[1].set_colorkey(BLACK)
+        self.Frightened_ghost[2].set_colorkey(BLACK)
 
         # frightened and blinking
         self.Frightened_ghost_blinking = dict()
@@ -813,6 +811,8 @@ class Game:
         self.Frightened_ghost_blinking[2] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_4.png')).convert()
         self.Frightened_ghost_blinking[3] = self.Frightened_ghost[2]
         self.Frightened_ghost_blinking[4] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_3.png')).convert()
+        self.Frightened_ghost_blinking[2].set_colorkey(BLACK)
+        self.Frightened_ghost_blinking[4].set_colorkey(BLACK)
 
         # Standard ones
         self.Ghost_pics = dict()
@@ -822,11 +822,13 @@ class Game:
                 self.Ghost_pics[color][direction] = dict()
                 for i in range(1, 3):
                     self.Ghost_pics[color][direction][i] = pygame.image.load(os.path.join(img_folder, color+'_'+direction+'_ghost_'+str(i)+'.png')).convert()
+                    self.Ghost_pics[color][direction][i].set_colorkey(BLACK)
 
         # Ghost eyes
         self.Ghost_eyes = dict()
         for direction in ('left', 'right', 'up', 'down'):
             self.Ghost_eyes[direction] = pygame.image.load(os.path.join(img_folder, 'ghost_eyes_'+direction+'.png')).convert()
+            self.Ghost_eyes[direction].set_colorkey(BLACK)
 
         # load pacman pictures
         self.Pacman_pics = dict()
@@ -834,17 +836,27 @@ class Game:
             self.Pacman_pics[direction] = dict()
             for i in range(1, 4):
                 self.Pacman_pics[direction][i] = pygame.image.load(os.path.join(img_folder, 'pacman_'+direction+'_'+str(i)+'.png')).convert()
+                self.Pacman_pics[direction][i].set_colorkey(BLACK)
 
         # dead pacman pictures
         self.Dead_pacman = dict()
         for i in range(1, 11):
             self.Dead_pacman[i] = pygame.image.load(os.path.join(img_folder, 'pacman_dead_'+str(i)+'.png')).convert()
+            self.Dead_pacman[i].set_colorkey(BLACK)
+
+        # Ghost scores
+        self.Ghost_scores = dict()
+        for score in (200, 400, 800, 1600):
+            self.Ghost_scores[score] = pygame.image.load(os.path.join(img_folder, str(score)+'.png')).convert()
+            self.Ghost_scores[score].set_colorkey(BLACK)
+
 
         # Bonuses
         self.Bonuses = dict()
         for bonus in ('apple', 'bell', 'cherry', 'galboss', 'key', 'melon', 'orange', 'strawberry'):
             self.Bonuses[bonus] = pygame.image.load(os.path.join(img_folder, bonus+'.png')).convert()
-            
+            self.Bonuses[bonus].set_colorkey(BLACK)
+
 
         # load walls based on values in MAP and if associated png exists
         self.Walls = dict()
@@ -877,7 +889,7 @@ class Game:
         self.fake_screen.blit(self.surface, (0, 32))
         self.fake_screen.blit(self.bottom, (0, self.HEIGHT+32))
 
-    def display_text(self, my_surface, my_text, pos_x, pos_y):
+    def display_text(self, my_surface, my_text, pos_x, pos_y, color=WHITE):
         """
         TBD: display a text
         """
@@ -891,6 +903,53 @@ class Game:
         """
         for life in range(0, self.lifes - 1):
             my_surface.blit(self.Pacman_pics['right'][2], (life*32+24, 4))
+        
+    def eat_ghost(self, ghost, score):
+        """
+        Display Score over ghost
+        """
+
+        x_pos = ghost.rect.x
+        y_pos = ghost.rect.y
+
+        self.all_sprites.remove(ghost)
+        i = 1
+        while i < 7:
+
+            # evaluate the pygame event
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    break
+
+            # Draw all
+            self.surface.fill(BLACK)
+            self.top.fill(BLACK)
+            self.bottom.fill(BLACK)
+
+            # Score
+            self.display_text(self.top,"Player 1     Score: "+str(int(self.score)), 24, 6)
+            # draw walls
+            self.display_map(self.surface)
+
+            # Draw sprites
+            self.all_sprites.draw(self.surface)
+            self.display_lifes(self.bottom)
+
+            # draw score on the top of ghost
+            self.surface.blit(self.Ghost_scores[score], (x_pos, y_pos - (4*i)))
+
+            self.fake_screen.blit(self.top, (0, 0))
+            self.fake_screen.blit(self.surface, (0, 32))
+            self.fake_screen.blit(self.bottom, (0, self.HEIGHT+32))
+
+            self.screen.blit(self.scale_output(self.fake_screen, self.scale), (0, 0))
+
+            # *after* drawing everything, flip the display
+            pygame.display.flip()
+
+            i += 1
+            time.sleep(0.05)
+        self.all_sprites.add(ghost)
 
     def loose_life(self):
         """
@@ -1076,6 +1135,11 @@ class Game:
                             # Use a pow()
                             ghost_score = 200*math.pow(2, self.ghosts_in_a_row-1)
                             self.score += ghost_score
+                            # Found a sort of bug where collided the same ghost 5 times in a row !!! (collide function bug ???)
+                            if ghost_score > 1600:
+                                self.ghosts_in_a_row = 0
+                            # diplay score
+                            self.eat_ghost(ghost, ghost_score)
                         elif ghost.mode != "eaten":
                             self.lifes -= 1
                             self.loose_life()
