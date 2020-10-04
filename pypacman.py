@@ -456,9 +456,9 @@ class Ghost(pygame.sprite.Sprite):
             elif self.color == "red":
                 self.target = (self.game.pacman.x, self.game.pacman.y)
             else:
-                # Should never happen
+                # Runaway 
                 self.target = (self.game.pacman.x, self.game.pacman.y)
-        
+
         #print(self.color,"target=",self.target, "pacman=",self.game.pacman.x, self.game.pacman.y)
         # We calculate for each possible moves
         for direction in self.allowed_moves:
@@ -481,6 +481,7 @@ class Ghost(pygame.sprite.Sprite):
             distance = math.sqrt(dist_x**2 + dist_y**2)
             self.distances[direction] = distance
 
+
         if self.mode in ("chase", "scatter", "eaten", "jail"):
             min_dist = 99999999999
         elif self.mode == "runaway":
@@ -497,7 +498,6 @@ class Ghost(pygame.sprite.Sprite):
                 if value > min_dist:
                     min_dist = value
                     self.direction = key
-
 
     # Checks the free positions around the ghost
     def get_allowed_moves(self):
@@ -1075,10 +1075,12 @@ class Game:
                             self.lifes -= 1
                             self.loose_life()
                             self.current_mode_idx = 0
+                            self.start_mode_timer = time.time()
                 elif self.pacman.mode != "eaten":
                     self.lifes -= 1
                     self.loose_life()
                     self.current_mode_idx = 0
+                    self.start_mode_timer = time.time()
 
             # Won ?
             if self.pacgums == 0:
