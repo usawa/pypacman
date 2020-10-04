@@ -459,6 +459,10 @@ class Ghost(pygame.sprite.Sprite):
                 # Runaway 
                 self.target = (self.game.pacman.x, self.game.pacman.y)
 
+        if self.mode == "runaway" and self.forbid_turnback:
+            self.direction = random.choice(list(self.allowed_moves))
+            return 0
+
         #print(self.color,"target=",self.target, "pacman=",self.game.pacman.x, self.game.pacman.y)
         # We calculate for each possible moves
         for direction in self.allowed_moves:
@@ -480,7 +484,6 @@ class Ghost(pygame.sprite.Sprite):
             #distance = round(math.sqrt(dist_x * dist_x + dist_y * dist_y))
             distance = math.sqrt(dist_x**2 + dist_y**2)
             self.distances[direction] = distance
-
 
         if self.mode in ("chase", "scatter", "eaten", "jail"):
             min_dist = 99999999999
@@ -519,8 +522,8 @@ class Ghost(pygame.sprite.Sprite):
         if MAP[self.y + 1][self.x] < 16 or (self.mode == "eaten" and MAP[self.y + 1][self.x] == 17):
             self.allowed_moves.append("down")
 
-        # In some positions ghist isn't allowed to go up
-        if 'up' in self.allowed_moves:
+        # In some positions ghist isn't allowed to go up, except if eaten (to go directly in jail)
+        if 'up' in self.allowed_moves and self.mode != 'eaten':
             for position in FORBIDDEN_UP:
                 if self.x == position[0] and self.y-1 == position[1]:
                     self.allowed_moves.remove('up')
@@ -528,6 +531,7 @@ class Ghost(pygame.sprite.Sprite):
 
         # Remove opposition direction By default : no turn back
         if self.direction != '':
+            print(self.moves, self.opposite, self.direction)
             reverse = self.opposite[self.moves.index(self.direction)]
 
             if self.forbid_turnback and reverse in self.allowed_moves:
@@ -679,6 +683,7 @@ class Ghost(pygame.sprite.Sprite):
                 self.rect.y = 0
                 self.real_y = 0
 
+        # Ghosts bitmaps depending of the status
         if self.mode == "runaway":
             current_time = time.time()
             # The last 3 seconds : blink
