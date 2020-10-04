@@ -74,7 +74,7 @@ JAIL = { "red": (12,14) ,
 
 PACMAN_TIMERS = {
     "normal": 999999999,
-    "chase": 8
+    "chase": 6
 }
 
 PACMAN_POS = (14, 17)
@@ -460,7 +460,6 @@ class Ghost(pygame.sprite.Sprite):
             self.direction = random.choice(list(self.allowed_moves))
             return 0
 
-        #print(self.color,"target=",self.target, "pacman=",self.game.pacman.x, self.game.pacman.y)
         # We calculate for each possible moves
         for direction in self.allowed_moves:
             x = self.x
@@ -528,7 +527,6 @@ class Ghost(pygame.sprite.Sprite):
 
         # Remove opposition direction By default : no turn back
         if self.direction != '':
-            print(self.moves, self.opposite, self.direction)
             reverse = self.opposite[self.moves.index(self.direction)]
 
             if self.forbid_turnback and reverse in self.allowed_moves:
@@ -549,19 +547,18 @@ class Ghost(pygame.sprite.Sprite):
 
         if new_mode:
             # start time of runaway is aways the same as pacman in chase
-            self.start_time = self.game.pacman.start_time
             self.old_mode = self.mode
             self.mode = new_mode
             self.mode_changed = True
 
         else:
             # Modes are managed by game loop
-
             # Runaway is sync with pacman current status
             if self.mode == 'runaway':
                 if self.game.pacman.mode != 'chase':
                     self.mode = LEVELS[self.game.level][self.game.current_mode_idx][0]
 
+            # Eaten and runaway are specific: don't change the mod during it
             if self.mode not in ('eaten', 'runaway'):
                 self.mode = LEVELS[self.game.level][self.game.current_mode_idx][0]
                 if self.old_mode != self.mode:
@@ -728,7 +725,7 @@ class Game:
         self.score = 0
 
         self.scale = 1
-        self.FPS = 30 
+        self.FPS = 30
 
         self.count_loops = 0
 
@@ -772,7 +769,6 @@ class Game:
 
         self.red = Ghost(self, 13, 11, 'red', "scatter")
         for color in ("blue", "yellow", "pink"):
-
             setattr(self, color, Ghost(self, JAIL[color][0], JAIL[color][1], color, "jail") )
 
         self.Ghosts = []
@@ -872,9 +868,7 @@ class Game:
         Display board game with map and sprites
         """
         # Draw all
-        self.surface.fill(BLACK)
-        self.top.fill(BLACK)
-        self.bottom.fill(BLACK)
+        self.clear_all_surfaces()
 
         # Score
         self.display_text(self.top,"Player 1     Score: "+str(int(self.score)), 24, 6)
@@ -885,9 +879,8 @@ class Game:
         self.all_sprites.draw(self.surface)
 
         self.display_lifes(self.bottom)
-        self.fake_screen.blit(self.top, (0, 0))
-        self.fake_screen.blit(self.surface, (0, 32))
-        self.fake_screen.blit(self.bottom, (0, self.HEIGHT+32))
+
+        self.blit_all_surfaces()
 
     def display_text(self, my_surface, my_text, pos_x, pos_y, color=WHITE):
         """
@@ -922,9 +915,7 @@ class Game:
                     break
 
             # Draw all
-            self.surface.fill(BLACK)
-            self.top.fill(BLACK)
-            self.bottom.fill(BLACK)
+            self.clear_all_surfaces()
 
             # Score
             self.display_text(self.top,"Player 1     Score: "+str(int(self.score)), 24, 6)
@@ -938,11 +929,7 @@ class Game:
             # draw score on the top of ghost
             self.surface.blit(self.Ghost_scores[score], (x_pos, y_pos - (4*i)))
 
-            self.fake_screen.blit(self.top, (0, 0))
-            self.fake_screen.blit(self.surface, (0, 32))
-            self.fake_screen.blit(self.bottom, (0, self.HEIGHT+32))
-
-            self.screen.blit(self.scale_output(self.fake_screen, self.scale), (0, 0))
+            self.blit_all_surfaces()
 
             # *after* drawing everything, flip the display
             pygame.display.flip()
@@ -963,10 +950,9 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     break
+            
             # Draw all
-            self.surface.fill(BLACK)
-            self.top.fill(BLACK)
-            self.bottom.fill(BLACK)
+            self.clear_all_surfaces()
 
             # draw walls
             self.display_map(self.surface)
@@ -978,11 +964,8 @@ class Game:
                 if i%2:
                     self.surface.blit(self.Dead_pacman[10], (self.pacman.rect.x, self.pacman.rect.y))
             self.display_lifes(self.bottom)
-            self.fake_screen.blit(self.top, (0, 0))
-            self.fake_screen.blit(self.surface, (0, 32))
-            self.fake_screen.blit(self.bottom, (0, self.HEIGHT+32))
 
-            self.screen.blit(self.scale_output(self.fake_screen, self.scale), (0, 0))
+            self.blit_all_surfaces()
 
             # *after* drawing everything, flip the display
             pygame.display.flip()
@@ -996,7 +979,17 @@ class Game:
         for ghost in self.Ghosts:
             ghost.reinit(JAIL[ghost.color][0], JAIL[ghost.color][1], "jail")
 
+    def clear_all_surfaces(self):
+        self.surface.fill(BLACK)
+        self.top.fill(BLACK)
+        self.bottom.fill(BLACK)
 
+    def blit_all_surfaces(self):
+        self.fake_screen.blit(self.top, (0, 0))
+        self.fake_screen.blit(self.surface, (0, 32))
+        self.fake_screen.blit(self.bottom, (0, self.HEIGHT+32))
+        self.screen.blit(self.scale_output(self.fake_screen, self.scale), (0, 0))
+    
     def scale_output(self, my_surface, my_scale):
         """
         Scale the suface given as parameter
@@ -1117,9 +1110,6 @@ class Game:
 
             self.display_board_game()
 
-            # Everything on screen
-            self.screen.blit(self.scale_output(self.fake_screen, self.scale), (0, 0))
-
             # *after* drawing everything, flip the display
             pygame.display.flip()
 
@@ -1136,8 +1126,8 @@ class Game:
                             ghost_score = 200*math.pow(2, self.ghosts_in_a_row-1)
                             self.score += ghost_score
                             # Found a sort of bug where collided the same ghost 5 times in a row !!! (collide function bug ???)
-                            if ghost_score > 1600:
-                                self.ghosts_in_a_row = 0
+                            #if ghost_score > 1600:
+                            #    self.ghosts_in_a_row = 0
                             # diplay score
                             self.eat_ghost(ghost, ghost_score)
                         elif ghost.mode != "eaten":
