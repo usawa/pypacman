@@ -86,6 +86,7 @@ FORBIDDEN_UP = [
     (15, 22)
 ]
 
+# 28 (0-27) x 31 (0-30)
 MAP = [
         [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53],
         [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 51],
@@ -367,8 +368,8 @@ class Ghost(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 + 12, self.y * 24 + 12)
 
-        self.real_x = self.x * 24 + 12
-        self.real_y = self.y * 24 + 12
+        self.real_x = self.x * 24
+        self.real_y = self.y * 24
 
     # Pinky is pink
     def get_pinky_ambush_direction(self):
@@ -453,7 +454,7 @@ class Ghost(pygame.sprite.Sprite):
             elif self.color == "red":
                 self.target = (self.game.pacman.x, self.game.pacman.y)
             else:
-                # Runaway 
+                # Runaway
                 self.target = (self.game.pacman.x, self.game.pacman.y)
 
         if self.mode == "runaway" and self.forbid_turnback:
@@ -499,44 +500,50 @@ class Ghost(pygame.sprite.Sprite):
                     self.direction = key
 
     # Checks the free positions around the ghost
-    def get_allowed_moves(self):
+    def get_allowed_moves(self, x=None, y=None):
         """
         based on current position, list all possible directions
         """
-        self.allowed_moves = []
+        allowed_moves = []
+
+        if not x:
+            x = self.x
+            y = self.y
 
         # check walls
-        if MAP[self.y][self.x-1] < 16:
-            self.allowed_moves.append("left")
+        # 28 (0-27) x 31 (0-30)
+        if MAP[y][x-1] < 16:
+            allowed_moves.append("left")
         # Problems with right tunnel : a ghost can go there
-        if (self.x+1 < 28 and MAP[self.y][self.x+1] < 16) or self.x+1 == 28:
-            self.allowed_moves.append("right")
+        if (x+1 < 28 and MAP[y][x+1] < 16) or x+1 == 28:
+            allowed_moves.append("right")
         # if not in jail mode , we can go outside
-        if MAP[self.y - 1][self.x] < 16 or (self.mode != "jail" and MAP[self.y - 1][self.x] == 17):
-            self.allowed_moves.append("up")
+        if x<28 and (MAP[y - 1][x] < 16 or (self.mode != "jail" and MAP[y - 1][x] == 17)):
+            allowed_moves.append("up")
         # You can only enter in jail in eaten mode
-        if MAP[self.y + 1][self.x] < 16 or (self.mode == "eaten" and MAP[self.y + 1][self.x] == 17):
-            self.allowed_moves.append("down")
+        if x<28 and (MAP[y + 1][x] < 16 or (self.mode == "eaten" and MAP[y + 1][x] == 17)):
+            allowed_moves.append("down")
 
         # In some positions ghist isn't allowed to go up, except if eaten (to go directly in jail)
-        if 'up' in self.allowed_moves and self.mode != 'eaten':
+        if 'up' in allowed_moves and self.mode != 'eaten':
             for position in FORBIDDEN_UP:
-                if self.x == position[0] and self.y-1 == position[1]:
-                    self.allowed_moves.remove('up')
+                if x == position[0] and y-1 == position[1]:
+                    allowed_moves.remove('up')
                     break
 
         # Remove opposition direction By default : no turn back
         if self.direction != '':
             reverse = self.opposite[self.moves.index(self.direction)]
 
-            if self.forbid_turnback and reverse in self.allowed_moves:
+            if self.forbid_turnback and reverse in allowed_moves:
                 #if reverse in self.allowed_moves:
-                self.allowed_moves.remove(reverse)
+                allowed_moves.remove(reverse)
 
             # It should happen only if a row line
-            if len(self.allowed_moves) == 0:
-                self.allowed_moves.append(reverse)
+            if len(allowed_moves) == 0:
+                allowed_moves.append(reverse)
 
+        return(allowed_moves)
 
     # Check time spent in current mode then change it based on a timer
     def change_mode(self, new_mode=False):
@@ -595,8 +602,8 @@ class Ghost(pygame.sprite.Sprite):
                 self.reinit(JAIL[self.color][0], JAIL[self.color][1], "jail")
 
             # What are the allowed moves ?
-            self.get_allowed_moves()
-            
+            self.allowed_moves = self.get_allowed_moves()
+
             # choose a direction, based on the ghost mode
             self.choose_direction()
 
@@ -618,7 +625,6 @@ class Ghost(pygame.sprite.Sprite):
             12       2
             24       1
             """
-
             # new speed ?
             if self.mode == "eaten":
                 self.speed = 12
@@ -887,7 +893,7 @@ class Game:
         TBD: display a text
         """
         font = pygame.font.Font('RetroGaming.ttf', 18)
-        text = font.render(my_text, True, WHITE)
+        text = font.render(my_text, True, color)
         my_surface.blit(text, (pos_x, pos_y))
 
     def display_lifes(self, my_surface):
@@ -896,7 +902,7 @@ class Game:
         """
         for life in range(0, self.lifes - 1):
             my_surface.blit(self.Pacman_pics['right'][2], (life*32+24, 4))
-        
+
     def eat_ghost(self, ghost, score):
         """
         Display Score over ghost
@@ -950,7 +956,7 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     break
-            
+
             # Draw all
             self.clear_all_surfaces()
 
@@ -980,16 +986,22 @@ class Game:
             ghost.reinit(JAIL[ghost.color][0], JAIL[ghost.color][1], "jail")
 
     def clear_all_surfaces(self):
+        """
+        All surfaces in black
+        """
         self.surface.fill(BLACK)
         self.top.fill(BLACK)
         self.bottom.fill(BLACK)
 
     def blit_all_surfaces(self):
+        """
+        Put all surfaces on screen and scale it if needed
+        """
         self.fake_screen.blit(self.top, (0, 0))
         self.fake_screen.blit(self.surface, (0, 32))
         self.fake_screen.blit(self.bottom, (0, self.HEIGHT+32))
         self.screen.blit(self.scale_output(self.fake_screen, self.scale), (0, 0))
-    
+
     def scale_output(self, my_surface, my_scale):
         """
         Scale the suface given as parameter
@@ -1043,11 +1055,11 @@ class Game:
         return hit_list
 
     def manage_bonus(self):
-        """ 
+        """
         Bonus is a 'false' ghost
         """
 
-        bonus_set = False        
+        bonus_set = False
         allowed_bonuses = ("cherry")
 
         # There can't be two bonuses at the same time
@@ -1067,7 +1079,6 @@ class Game:
         self.ghosts_in_a_row = 0
         lives_gained = 0
 
-        
         clock = pygame.time.Clock()
         # Game loop
         running = True
@@ -1080,7 +1091,7 @@ class Game:
         self.current_mode = LEVELS[self.level][self.current_mode_idx][0]
         self.start_mode_timer = time.time()
 
-        while running:        
+        while running:
 
             # keep loop running at the right speed
             clock.tick(self.FPS)
@@ -1096,10 +1107,10 @@ class Game:
             # check if it's time to change mode
             current_time = time.time()
             if current_time - self.start_mode_timer > LEVELS[self.level][self.current_mode_idx][1]:
-                self.start_mode_timer = current_time 
+                self.start_mode_timer = current_time
                 self.current_mode_idx += 1
                 self.current_mode = LEVELS[self.level][self.current_mode_idx][0]
-            
+
             self.pacman.update()
             self.all_ghosts.update()
 
@@ -1135,11 +1146,14 @@ class Game:
                             self.loose_life()
                             self.current_mode_idx = 0
                             self.start_mode_timer = time.time()
-                elif self.pacman.mode != "eaten":
-                    self.lifes -= 1
-                    self.loose_life()
-                    self.current_mode_idx = 0
-                    self.start_mode_timer = time.time()
+                else:
+                    for ghost in hit_list:
+                        if ghost.mode not in ("eaten", "runaway"):
+                            self.lifes -= 1
+                            self.loose_life()
+                            self.current_mode_idx = 0
+                            self.start_mode_timer = time.time()
+                            break
 
             # Won ?
             if self.pacgums == 0:
