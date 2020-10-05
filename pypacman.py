@@ -348,7 +348,7 @@ class Ghost(pygame.sprite.Sprite):
         self.distances = dict()
         self.allowed_moves = []
         self.forbid_turnback = True
-        self.direction = ""
+        self.direction = "left"
         self.speed = 4
         self.blinking_tempo = 0
         self.in_tunnel = False
@@ -584,47 +584,32 @@ class Ghost(pygame.sprite.Sprite):
         Update the ghost status and position
         main control
         """
-
-        # change mode based on timer
-        self.change_mode()
-
         # For blinking temporisation in Frightened mode
         self.blinking_tempo += 0.25
-
-        # Choose a direction only when we're on a MAP coordinates
-        if self.rect.x % 24 == 0 and self.rect.y % 24 == 0:
-
-            self.x = int(self.rect.x / 24)
-            self.y = int(self.rect.y / 24)
+        loop = 0
+        while loop < self.speed:
+            loop += 0.1
 
             # Check if we're in eaten and we are now on expected coordinates
             if self.mode == "eaten" and self.x == JAIL[self.color][0] and self.y == JAIL[self.color][1]:
                 self.reinit(JAIL[self.color][0], JAIL[self.color][1], "jail")
 
-            # What are the allowed moves ?
-            self.allowed_moves = self.get_allowed_moves()
+            # change mode based on timer
+            self.change_mode()
 
-            # choose a direction, based on the ghost mode
-            self.choose_direction()
+            # Choose a direction only when we're on a MAP coordinates
+            if round(self.real_x,1) % 24 == 0 and round(self.real_y,1) % 24 == 0:
 
-            # change mode alreay done, directino alreay set, we can forbid
-            self.forbid_turnback = True
+                self.x = int(self.rect.x / 24)
+                self.y = int(self.rect.y / 24)
 
-            """
-            Allowed speeds:
-            1       24 moves to the next position
-            2       12
-            2.1818  11
-            2.4     10
-            3        8
-            3.4285   7
-            4        6
-            4.8      5
-            6        4
-            8        3
-            12       2
-            24       1
-            """
+                # What are the allowed moves ?
+                self.allowed_moves = self.get_allowed_moves()
+                self.choose_direction()
+
+                # change mode alreay done, directino alreay set, we can forbid
+                self.forbid_turnback = True
+
             # new speed ?
             if self.mode == "eaten":
                 self.speed = 12
@@ -642,46 +627,50 @@ class Ghost(pygame.sprite.Sprite):
             else:
                 self.speed = 4
 
-            # in tunnel reduce speed to 2
-            if MAP[self.y][self.x] == 15:
-                if not self.in_tunnel:
-                    self.in_tunnel = True
-            else:
-                self.in_tunnel = False
+                # in tunnel reduce speed to 2
+                if MAP[self.y][self.x] == 15:
+                    if not self.in_tunnel:
+                        self.in_tunnel = True
+                else:
+                    self.in_tunnel = False
 
-            if self.in_tunnel:
-                self.speed = 2
+                if self.in_tunnel:
+                    self.speed = 2
 
-        # Direction is set : move the ghost
-        if self.direction == "left":
-            self.real_x -= self.speed
-            self.rect.x = round(self.real_x)
-            # go to right border
-            if self.rect.x < -12 :
-                self.rect.x = self.game.WIDTH-12
-                self.real_x = self.rect.x
+            # Direction is set : move the ghost
+            if self.direction == "left":
+                #self.real_x -= self.speed
+                self.real_x -= 0.1
+                self.rect.x = round(self.real_x)
+                # go to right border
+                if self.rect.x < -12 :
+                    self.rect.x = self.game.WIDTH-12
+                    self.real_x = self.rect.x
 
-        if self.direction == "right":
-            self.real_x += self.speed
-            self.rect.x = round(self.real_x)
-            # go to left border
-            if self.rect.x >= self.game.WIDTH:
-                self.rect.x = -12
-                self.real_x = -12
+            if self.direction == "right":
+                #self.real_x += self.speed
+                self.real_x += 0.1
+                self.rect.x = round(self.real_x)
+                # go to left border
+                if self.rect.x >= self.game.WIDTH:
+                    self.rect.x = -12
+                    self.real_x = -12
 
-        if self.direction == "up":
-            self.real_y -= self.speed
-            self.rect.y = round(self.real_y)
-            if self.rect.y < 0:
-                self.rect.y = self.game.HEIGHT-12
-                self.real_y = self.rect.y
+            if self.direction == "up":
+                #self.real_y -= self.speed
+                self.real_y -= 0.1
+                self.rect.y = round(self.real_y)
+                if self.rect.y < 0:
+                    self.rect.y = self.game.HEIGHT-12
+                    self.real_y = self.rect.y
 
-        if self.direction == "down":
-            self.real_y += self.speed
-            self.rect.y = round(self.real_y)
-            if self.rect.y >= self.game.HEIGHT:
-                self.rect.y = 0
-                self.real_y = 0
+            if self.direction == "down":
+                #self.real_y += self.speed
+                self.real_y += 0.1 
+                self.rect.y = round(self.real_y)
+                if self.rect.y >= self.game.HEIGHT:
+                    self.rect.y = 0
+                    self.real_y = 0
 
         # Ghosts bitmaps depending of the status
         if self.mode == "runaway":
