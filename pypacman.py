@@ -11,19 +11,22 @@ import math
 import os
 import pygame
 
-LEVELS = dict()
+LEVELS = {}
 
-LEVELS[1] = [
-    ['scatter', 7 ],
-    [ 'chase', 20 ],
-    [ 'scatter', 7 ],
-    [ 'chase', 20 ],
-    [ 'scatter', 7 ],
-    [ 'chase', 20 ],
-    [ 'scatter', 5 ],
-    [ 'chase', 9999999 ]
-]
-
+LEVELS[1] = {
+    'MODES': (
+        ['scatter', 7 ],
+        [ 'chase', 20 ],
+        [ 'scatter', 7 ],
+        [ 'chase', 20 ],
+        [ 'scatter', 7 ],
+        [ 'chase', 20 ],
+        [ 'scatter', 5 ],
+        [ 'chase', 9999999 ]
+    ),
+    'red_dots_remaining': 20
+}
+"""
 LEVELS[2] = [
     ['scatter', 7 ],
     [ 'chase', 20 ],
@@ -48,6 +51,9 @@ LEVELS[5] = [
     [ 'scatter', 0.01 ],
     [ 'chase', 9999999 ]
 ]
+
+LEVELS[6] = LEVELS[5]
+"""
 
 FRUITS_SCORES = {   "cherry": 100,
                     "strawberry": 300,
@@ -134,6 +140,8 @@ class Pacman(pygame.sprite.Sprite):
         self.game = my_game
         self.x = None
         self.y = None
+        self.real_x = None
+        self.real_y = None
         self.speed = None
         self.mode = None
         self.mode_changed = None
@@ -142,6 +150,7 @@ class Pacman(pygame.sprite.Sprite):
         self.allowed_moves = None
         self.count_moves = None
         self.start_time = None
+        self.miss_loops = None
 
         self.reinit(x, y)
 
@@ -155,12 +164,14 @@ class Pacman(pygame.sprite.Sprite):
         self.image = self.game.Pacman_pics['left'][1]
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 + 12, self.y * 24 + 12)
+        self.real_x = self.rect.x
+        self.real_y = self.rect.y
         self.speed = 4
         self.direction = ""
         self.mode = "normal"
         self.allowed_moves = []
         self.count_moves = 0
-
+        self.miss_loops = 0
         # for the timers
         self.start_time = time.time()
         self.mode_changed = False
@@ -196,12 +207,14 @@ class Pacman(pygame.sprite.Sprite):
             self.game.score = self.game.score + 10
             MAP[self.y][self.x] = 0
             self.game.pacgums = self.game.pacgums - 1
+            self.miss_loops = 4
 
         # Big pacgum : 50 It's time to chase !
         if MAP[self.y][self.x] == 2:
             self.game.score += 50
             MAP[self.y][self.x] = 0
             self.game.pacgums -= 1
+            self.miss_loops = 12
             chase = True
 
         return chase
@@ -241,59 +254,77 @@ class Pacman(pygame.sprite.Sprite):
         """
         used to move pacman in any direction
         """
+        loop = 0
 
-        # Choose a direction only when we're on a MAP coordinates
-        if self.rect.x % 24 == 0 and self.rect.y % 24 == 0:
-            self.x = int(self.rect.x / 24)
-            self.y = int(self.rect.y / 24)
+        while loop < self.speed:
 
-            self.change_mode()
 
-            self.get_allowed_moves()
+            loop += 0.1
 
-            keys = pygame.key.get_pressed()
+            if self.miss_loops>0:
+                self.miss_loops -=1
+                continue
 
-            if keys[pygame.K_LEFT]:
-                if MAP[self.y][self.x-1] < 16:
-                    self.direction = "left"
-            if keys[pygame.K_RIGHT]:
-                if self.x+1 < 28 and MAP[self.y][self.x+1] < 16:
-                    self.direction = "right"
-            if keys[pygame.K_UP]:
-                if MAP[self.y - 1][self.x] < 16:
-                    self.direction = "up"
-            if keys[pygame.K_DOWN]:
-                if self.y + 1 < 30 and MAP[self.y + 1][self.x] < 16:
-                    self.direction = "down"
+            # Choose a direction only when we're on a MAP coordinates
+            if round(self.real_x) % 24 == 0 and round(self.real_y) % 24 == 0:
+                self.x = int(self.rect.x / 24)
+                self.y = int(self.rect.y / 24)
 
-        # Direction is set : move the ghost
-        moved = False
+                self.change_mode()
 
-        if self.direction == "left" and "left" in self.allowed_moves:
-            self.rect.x -= self.speed
-            moved = True
-            # go to right border
-            if self.rect.x < 0:
-                self.rect.x = self.game.WIDTH-24
+                self.get_allowed_moves()
 
-        if self.direction == "right" and "right" in self.allowed_moves:
-            self.rect.x += self.speed
-            moved = True
-            # go to left border
-            if self.rect.x > self.game.WIDTH-24:
-                self.rect.x = 0
+                keys = pygame.key.get_pressed()
 
-        if self.direction == "up" and "up" in self.allowed_moves:
-            self.rect.y -= self.speed
-            moved = True
-            if self.rect.y < 0:
-                self.rect.y = self.game.HEIGHT-24
+                if keys[pygame.K_LEFT]:
+                    if MAP[self.y][self.x-1] < 16:
+                        self.direction = "left"
+                if keys[pygame.K_RIGHT]:
+                    if self.x+1 < 28 and MAP[self.y][self.x+1] < 16:
+                        self.direction = "right"
+                if keys[pygame.K_UP]:
+                    if MAP[self.y - 1][self.x] < 16:
+                        self.direction = "up"
+                if keys[pygame.K_DOWN]:
+                    if self.y + 1 < 30 and MAP[self.y + 1][self.x] < 16:
+                        self.direction = "down"
 
-        if self.direction == "down" and "down" in self.allowed_moves:
-            self.rect.y += self.speed
-            moved = True
-            if self.rect.y > self.game.HEIGHT-24:
-                self.rect.y = 0
+            # Direction is set : move the ghost
+            moved = False
+
+            if self.direction == "left" and "left" in self.allowed_moves:
+                self.real_x -= 0.1
+                self.rect.x = round(self.real_x)
+                moved = True
+                # go to right border
+                if self.rect.x < 0:
+                    self.rect.x = self.game.WIDTH-24
+                    self.real_x = self.rect.x
+
+            if self.direction == "right" and "right" in self.allowed_moves:
+                self.real_x += 0.1
+                self.rect.x = round(self.real_x)
+                moved = True
+                # go to left border
+                if self.rect.x > self.game.WIDTH-24:
+                    self.rect.x = 0
+                    self.real_x = 0
+
+            if self.direction == "up" and "up" in self.allowed_moves:
+                self.real_y -= 0.1
+                self.rect.y = round(self.real_y)
+                moved = True
+                if self.rect.y < 0:
+                    self.rect.y = self.game.HEIGHT-24
+                    self.real_y = self.rect.y
+
+            if self.direction == "down" and "down" in self.allowed_moves:
+                self.real_y += 0.1
+                self.rect.y = round(self.real_y)
+                moved = True
+                if self.rect.y > self.game.HEIGHT-24:
+                    self.real_y = 0
+                    self.rect.y = 0
 
         if moved:
             self.count_moves += 1
@@ -440,6 +471,9 @@ class Ghost(pygame.sprite.Sprite):
         y = self.y
         self.distances = dict()
 
+        if self.forbid_turnback == False:
+            self.forbid_turnback = True
+
         if self.mode == "scatter":
             self.target = (SCATTER[self.color][0], SCATTER[self.color][1])
         elif self.mode == "eaten":
@@ -563,14 +597,17 @@ class Ghost(pygame.sprite.Sprite):
             # Runaway is sync with pacman current status
             if self.mode == 'runaway':
                 if self.game.pacman.mode != 'chase':
-                    self.mode = LEVELS[self.game.level][self.game.current_mode_idx][0]
+                    self.mode = LEVELS[self.game.level]['MODES'][self.game.current_mode_idx][0]
 
             # Eaten and runaway are specific: don't change the mod during it
             if self.mode not in ('eaten', 'runaway'):
-                self.mode = LEVELS[self.game.level][self.game.current_mode_idx][0]
+                self.mode = LEVELS[self.game.level]['MODES'][self.game.current_mode_idx][0]
                 if self.old_mode != self.mode:
                     self.mode_changed = True
                     self.old_mode = self.mode
+
+            if self.game.pacgums <= LEVELS[self.game.level]['red_dots_remaining']:
+                self.mode = "chase"
 
         if self.mode_changed:
             self.start_time = time.time()
@@ -608,7 +645,9 @@ class Ghost(pygame.sprite.Sprite):
                 self.choose_direction()
 
                 # change mode alreay done, directino alreay set, we can forbid
-                self.forbid_turnback = True
+                #self.forbid_turnback = True
+
+                #self.choose_direction()
 
             # new speed ?
             if self.mode == "eaten":
@@ -616,14 +655,7 @@ class Ghost(pygame.sprite.Sprite):
             elif self.mode == "runaway":
                 self.speed = 2
             elif self.mode == "chase":
-                if self.color == "red":
-                    #if self.speed == 4:
-                    #    self.speed = 4.8
-                    #else:
-                    #    self.speed = 4
-                    self.speed = 4
-                else:
-                    self.speed = 4
+                self.speed = 4
             else:
                 self.speed = 4
 
@@ -1077,7 +1109,7 @@ class Game:
         self.level += 1
 
         self.current_mode_idx = 0
-        self.current_mode = LEVELS[self.level][self.current_mode_idx][0]
+        self.current_mode = LEVELS[self.level]['MODES'][self.current_mode_idx][0]
         self.start_mode_timer = time.time()
 
         while running:
@@ -1095,10 +1127,10 @@ class Game:
 
             # check if it's time to change mode
             current_time = time.time()
-            if current_time - self.start_mode_timer > LEVELS[self.level][self.current_mode_idx][1]:
+            if current_time - self.start_mode_timer > LEVELS[self.level]['MODES'][self.current_mode_idx][1]:
                 self.start_mode_timer = current_time
                 self.current_mode_idx += 1
-                self.current_mode = LEVELS[self.level][self.current_mode_idx][0]
+                self.current_mode = LEVELS[self.level]['MODES'][self.current_mode_idx][0]
 
             self.pacman.update()
             self.all_ghosts.update()
@@ -1157,7 +1189,6 @@ def main():
     """
     main code to call the game
     """
-
     game = Game()
 
     # Play the game
