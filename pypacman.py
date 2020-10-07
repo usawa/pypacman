@@ -610,20 +610,22 @@ class Ghost(pygame.sprite.Sprite):
                 self.mode = "chase"
 
         if self.mode_changed:
-            # new speed ?
-            if self.mode == "eaten":
-                self.speed = 120
-            elif self.mode == "runaway":
-                self.speed = 20
-            elif self.mode == "chase":
-                self.speed = 41
-            else:
-                self.speed = 41
-
+            self.get_speed()
             self.start_time = time.time()
             if self.mode != 'scatter':
                 self.forbid_turnback = False
             print(self.color, "mode changed to ", self.mode)
+
+    def get_speed(self):
+        # new speed ?
+        if self.mode == "eaten":
+            self.speed = 120
+        elif self.mode == "runaway":
+            self.speed = 20
+        elif self.mode == "chase":
+            self.speed = 41
+        else:
+            self.speed = 41
 
     # main function
     def update(self):
@@ -650,6 +652,9 @@ class Ghost(pygame.sprite.Sprite):
 
         if self.in_tunnel:
             self.speed = 20
+        else:
+            # Get speeds
+            self.get_speed() 
 
         # if the next move exceeds the next case
         if self.direction == 'left' and self.real_x-self.speed < (self.x-1)*24*10:
@@ -693,32 +698,26 @@ class Ghost(pygame.sprite.Sprite):
                 #self.real_x -= self.speed
                 self.real_x -= speed
                 self.rect.x = round(self.real_x/10)
-                # go to right border
+                # go to right tunnel 
                 if self.rect.x < -12 :
                     self.rect.x = self.game.WIDTH-12
-                    self.real_x = self.rect.x
+                    self.real_x = self.rect.x*10
             elif self.direction == "right":
                 #self.real_x += self.speed
                 self.real_x += speed
                 self.rect.x = round(self.real_x/10)
-                # go to left border
+                # go to left tunnel
                 if self.rect.x >= self.game.WIDTH:
-                    self.rect.x = -12
-                    self.real_x = -12
+                    self.rect.x = -24
+                    self.real_x = -240
             elif self.direction == "up":
                 #self.real_y -= self.speed
                 self.real_y -= speed
                 self.rect.y = round(self.real_y/10)
-                if self.rect.y < 0:
-                    self.rect.y = self.game.HEIGHT-12
-                    self.real_y = self.rect.y
             elif self.direction == "down":
                 #self.real_y += self.speed
                 self.real_y += speed
                 self.rect.y = round(self.real_y/10)
-                if self.rect.y >= self.game.HEIGHT:
-                    self.rect.y = 0
-                    self.real_y = 0
 
         # Ghosts bitmaps depending of the status
         if self.mode == "runaway":
