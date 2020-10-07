@@ -207,14 +207,14 @@ class Pacman(pygame.sprite.Sprite):
             self.game.score = self.game.score + 10
             MAP[self.y][self.x] = 0
             self.game.pacgums = self.game.pacgums - 1
-            self.miss_loops = 4
+            self.miss_loops = 10
 
         # Big pacgum : 50 It's time to chase !
         if MAP[self.y][self.x] == 2:
             self.game.score += 50
             MAP[self.y][self.x] = 0
             self.game.pacgums -= 1
-            self.miss_loops = 12
+            self.miss_loops = 15
             chase = True
 
         return chase
@@ -380,7 +380,7 @@ class Ghost(pygame.sprite.Sprite):
         self.allowed_moves = []
         self.forbid_turnback = True
         self.direction = "left"
-        self.speed = 41
+        self.speed = 50
         self.blinking_tempo = 0
         self.in_tunnel = False
 
@@ -512,8 +512,8 @@ class Ghost(pygame.sprite.Sprite):
             # Pythagore, of course
             dist_x = abs(x - self.target[0])
             dist_y = abs(y - self.target[1])
-            distance = round(math.sqrt(dist_x * dist_x + dist_y * dist_y))
-            #distance = math.sqrt(dist_x**2 + dist_y**2)
+            #distance = round(math.sqrt(dist_x * dist_x + dist_y * dist_y))
+            distance = math.sqrt(dist_x**2 + dist_y**2)
             self.distances[direction] = distance
 
         if self.mode in ("chase", "scatter", "eaten", "jail"):
@@ -598,6 +598,7 @@ class Ghost(pygame.sprite.Sprite):
             if self.mode == 'runaway':
                 if self.game.pacman.mode != 'chase':
                     self.mode = LEVELS[self.game.level]['MODES'][self.game.current_mode_idx][0]
+                    self.get_speed()
 
             # Eaten and runaway are specific: don't change the mod during it
             if self.mode not in ('eaten', 'runaway'):
@@ -606,8 +607,8 @@ class Ghost(pygame.sprite.Sprite):
                     self.mode_changed = True
                     self.old_mode = self.mode
 
-            if self.game.pacgums <= LEVELS[self.game.level]['red_dots_remaining']:
-                self.mode = "chase"
+                if self.color == 'red' and self.game.pacgums <= LEVELS[self.game.level]['red_dots_remaining']:
+                    self.mode = "chase"
 
         if self.mode_changed:
             self.get_speed()
@@ -623,9 +624,9 @@ class Ghost(pygame.sprite.Sprite):
         elif self.mode == "runaway":
             self.speed = 20
         elif self.mode == "chase":
-            self.speed = 41
+            self.speed = 50
         else:
-            self.speed = 41
+            self.speed = 50
 
     # main function
     def update(self):
@@ -643,18 +644,6 @@ class Ghost(pygame.sprite.Sprite):
         # change mode based on timer
         self.change_mode()
 
-        # in tunnel reduce speed to 2
-        if MAP[self.y][self.x] == 15:
-            if not self.in_tunnel:
-                self.in_tunnel = True
-            else:
-                self.in_tunnel = False
-
-        if self.in_tunnel:
-            self.speed = 20
-        else:
-            # Get speeds
-            self.get_speed() 
 
         # if the next move exceeds the next case
         if self.direction == 'left' and self.real_x-self.speed < (self.x-1)*24*10:
@@ -688,8 +677,8 @@ class Ghost(pygame.sprite.Sprite):
 
                 # change mode alreay done, directino alreay set, we can forbid
                 self.forbid_turnback = True
-                if self.color == "red":
-                    print(self.color, 'direction=', self.rect.x, self.rect.y, self.real_x, self.real_y, self.x, self.y,  self.direction, 'speed=', self.speed, speed, self.target)
+                #if self.color == "red":
+                #    print(self.color, 'direction=', self.real_x, self.real_y, self.x, self.y,  self.direction, 'tunnel=',self.in_tunnel, MAP[self.y][self.x], 'speed=', self.speed, speed, next_loops, self.target)
 
 
 
@@ -699,8 +688,8 @@ class Ghost(pygame.sprite.Sprite):
                 self.real_x -= speed
                 self.rect.x = round(self.real_x/10)
                 # go to right tunnel 
-                if self.rect.x < -12 :
-                    self.rect.x = self.game.WIDTH-12
+                if self.rect.x <= -24 :
+                    self.rect.x = self.game.WIDTH-24
                     self.real_x = self.rect.x*10
             elif self.direction == "right":
                 #self.real_x += self.speed
@@ -761,7 +750,7 @@ class Game:
         self.FULL_WIDTH = self.WIDTH
         self.FULL_HEIGHT = self.HEIGHT + 64
 
-        self.lifes = 3
+        self.lifes = 10
 
         self.pacgums = self.count_pacgums()
         self.score = 0
