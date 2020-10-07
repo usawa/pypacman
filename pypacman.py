@@ -73,8 +73,8 @@ SCATTER = { "red": (26,1) ,
 
 JAIL = { "red": (12,14) ,
          "blue": (13,14),
-         "yellow": (14,14),
-         "pink": (15,14)
+         "yellow": (15,14),
+         "pink": (14,14)
 }
 
 
@@ -379,7 +379,8 @@ class Ghost(pygame.sprite.Sprite):
         self.distances = dict()
         self.allowed_moves = []
         self.forbid_turnback = True
-        self.direction = "left"
+        #self.direction = "left"
+        self.direction = ''
         self.speed = 50
         self.blinking_tempo = 0
         self.in_tunnel = False
@@ -644,21 +645,30 @@ class Ghost(pygame.sprite.Sprite):
         # change mode based on timer
         self.change_mode()
 
+        # in tunnel divide speed by 2
+        if MAP[self.y][self.x] == 15:
+            self.in_tunnel = True
+        else:
+            self.in_tunnel = False
+
+        current_speed = self.speed
+        if self.in_tunnel:
+            current_speed = int(self.speed/2)
 
         # if the next move exceeds the next case
-        if self.direction == 'left' and self.real_x-self.speed < (self.x-1)*24*10:
-            next_speed = self.real_x - (self.x-1)*24*10
-        elif self.direction == 'right' and self.real_x+self.speed > (self.x+1)*24*10:
-            next_speed = (self.x+1)*24*10  - self.real_x
-        elif self.direction == 'up' and self.real_y-self.speed < (self.y-1)*24*10:
-            next_speed = self.real_y - (self.y-1)*24*10
-        elif self.direction == 'down' and self.real_y+self.speed > (self.y+1)*24*10:
-            next_speed = (self.y+1)*24*10 - self.real_y
+        if self.direction == 'left' and self.real_x-current_speed < (self.x-1)*24*10:
+            next_speed = self.real_x - (self.x-1)*240
+        elif self.direction == 'right' and self.real_x+current_speed > (self.x+1)*24*10:
+            next_speed = (self.x+1)*240  - self.real_x
+        elif self.direction == 'up' and self.real_y-current_speed < (self.y-1)*24*10:
+            next_speed = self.real_y - (self.y-1)*240
+        elif self.direction == 'down' and self.real_y+current_speed > (self.y+1)*24*10:
+            next_speed = (self.y+1)*240 - self.real_y
         else:
-            next_speed = self.speed
+            next_speed = current_speed
 
 
-        next_loops = (next_speed, self.speed-next_speed)
+        next_loops = (next_speed, current_speed-next_speed)
         #if self.color == 'red':
         #    print("next_loops=", next_loops)
 
@@ -677,14 +687,15 @@ class Ghost(pygame.sprite.Sprite):
 
                 # change mode alreay done, directino alreay set, we can forbid
                 self.forbid_turnback = True
-                #if self.color == "red":
-                #    print(self.color, 'direction=', self.real_x, self.real_y, self.x, self.y,  self.direction, 'tunnel=',self.in_tunnel, MAP[self.y][self.x], 'speed=', self.speed, speed, next_loops, self.target)
+
+
+            #if self.color == "red":
+            #    print(self.color, 'direction=', self.real_x, self.real_y, self.x, self.y,  self.direction, 'Original speed=', self.speed, 'real_speed', real_speed, 'loop_speed=',speed, 'loops values', next_loops)
 
 
 
             # Direction is set : move the ghost
             if self.direction == "left":
-                #self.real_x -= self.speed
                 self.real_x -= speed
                 self.rect.x = round(self.real_x/10)
                 # go to right tunnel 
@@ -692,7 +703,6 @@ class Ghost(pygame.sprite.Sprite):
                     self.rect.x = self.game.WIDTH-24
                     self.real_x = self.rect.x*10
             elif self.direction == "right":
-                #self.real_x += self.speed
                 self.real_x += speed
                 self.rect.x = round(self.real_x/10)
                 # go to left tunnel
@@ -700,11 +710,9 @@ class Ghost(pygame.sprite.Sprite):
                     self.rect.x = -24
                     self.real_x = -240
             elif self.direction == "up":
-                #self.real_y -= self.speed
                 self.real_y -= speed
                 self.rect.y = round(self.real_y/10)
             elif self.direction == "down":
-                #self.real_y += self.speed
                 self.real_y += speed
                 self.rect.y = round(self.real_y/10)
 
