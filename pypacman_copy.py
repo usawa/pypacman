@@ -254,6 +254,16 @@ class Pacman(pygame.sprite.Sprite):
         """
         used to move pacman in any direction
         """
+        # if the next move exceeds the next case
+        if self.direction == 'left' and round(self.real_x)-self.speed < self.x-1:
+            pass
+        if self.direction == 'right' and round(self.real_x)+self.speed > self.x+1:
+            pass
+        if self.direction == 'left' and round(self.real_y)-self.speed < self.y-1:
+            pass
+        if self.direction == 'left' and round(self.real_y)-self.speed > self.x+1:
+            pass
+
         # Choose a direction only when we're on a MAP coordinates
         if self.rect.x % 24 == 0 and self.rect.y % 24 == 0:
             self.x = int(self.rect.x / 24)

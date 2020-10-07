@@ -380,7 +380,7 @@ class Ghost(pygame.sprite.Sprite):
         self.allowed_moves = []
         self.forbid_turnback = True
         self.direction = "left"
-        self.speed = 5
+        self.speed = 41
         self.blinking_tempo = 0
         self.in_tunnel = False
 
@@ -399,8 +399,8 @@ class Ghost(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 + 12, self.y * 24 + 12)
 
-        self.real_x = self.x * 24
-        self.real_y = self.y * 24
+        self.real_x = self.x * 24 * 10
+        self.real_y = self.y * 24 * 10
 
     # Pinky is pink
     def get_pinky_ambush_direction(self):
@@ -512,8 +512,8 @@ class Ghost(pygame.sprite.Sprite):
             # Pythagore, of course
             dist_x = abs(x - self.target[0])
             dist_y = abs(y - self.target[1])
-            #distance = round(math.sqrt(dist_x * dist_x + dist_y * dist_y))
-            distance = math.sqrt(dist_x**2 + dist_y**2)
+            distance = round(math.sqrt(dist_x * dist_x + dist_y * dist_y))
+            #distance = math.sqrt(dist_x**2 + dist_y**2)
             self.distances[direction] = distance
 
         if self.mode in ("chase", "scatter", "eaten", "jail"):
@@ -610,6 +610,16 @@ class Ghost(pygame.sprite.Sprite):
                 self.mode = "chase"
 
         if self.mode_changed:
+            # new speed ?
+            if self.mode == "eaten":
+                self.speed = 120
+            elif self.mode == "runaway":
+                self.speed = 20
+            elif self.mode == "chase":
+                self.speed = 41
+            else:
+                self.speed = 41
+
             self.start_time = time.time()
             if self.mode != 'scatter':
                 self.forbid_turnback = False
@@ -623,83 +633,89 @@ class Ghost(pygame.sprite.Sprite):
         """
         # For blinking temporisation in Frightened mode
         self.blinking_tempo += 0.25
-        loop = 0
-        while loop < self.speed:
-            loop += 0.1
 
-            # Check if we're in eaten and we are now on expected coordinates
-            if self.mode == "eaten" and self.x == JAIL[self.color][0] and self.y == JAIL[self.color][1]:
-                self.reinit(JAIL[self.color][0], JAIL[self.color][1], "jail")
+        # Check if we're in eaten and we are now on expected coordinates
+        if self.mode == "eaten" and self.x == JAIL[self.color][0] and self.y == JAIL[self.color][1]:
+            self.reinit(JAIL[self.color][0], JAIL[self.color][1], "jail")
 
-            # change mode based on timer
-            self.change_mode()
+        # change mode based on timer
+        self.change_mode()
 
+        # in tunnel reduce speed to 2
+        if MAP[self.y][self.x] == 15:
+            if not self.in_tunnel:
+                self.in_tunnel = True
+            else:
+                self.in_tunnel = False
+
+        if self.in_tunnel:
+            self.speed = 20
+
+        # if the next move exceeds the next case
+        if self.direction == 'left' and self.real_x-self.speed < (self.x-1)*24*10:
+            next_speed = self.real_x - (self.x-1)*24*10
+        elif self.direction == 'right' and self.real_x+self.speed > (self.x+1)*24*10:
+            next_speed = (self.x+1)*24*10  - self.real_x
+        elif self.direction == 'up' and self.real_y-self.speed < (self.y-1)*24*10:
+            next_speed = self.real_y - (self.y-1)*24*10
+        elif self.direction == 'down' and self.real_y+self.speed > (self.y+1)*24*10:
+            next_speed = (self.y+1)*24*10 - self.real_y
+        else:
+            next_speed = self.speed
+
+
+        next_loops = (next_speed, self.speed-next_speed)
+        #if self.color == 'red':
+        #    print("next_loops=", next_loops)
+
+        for speed in next_loops:
+            if speed == 0:
+                continue
             # Choose a direction only when we're on a MAP coordinates
-            if round(self.real_x,1) % 24 == 0 and round(self.real_y,1) % 24 == 0:
+            if (self.real_x /10) % 24 == 0 and (self.real_y/10) % 24 == 0:
 
-                self.x = int(self.rect.x / 24)
-                self.y = int(self.rect.y / 24)
+                self.x = int(self.real_x / 10 / 24)
+                self.y = int(self.real_y / 10 / 24)
 
                 # What are the allowed moves ?
                 self.allowed_moves = self.get_allowed_moves()
                 self.choose_direction()
 
                 # change mode alreay done, directino alreay set, we can forbid
-                #self.forbid_turnback = True
+                self.forbid_turnback = True
+                if self.color == "red":
+                    print(self.color, 'direction=', self.rect.x, self.rect.y, self.real_x, self.real_y, self.x, self.y,  self.direction, 'speed=', self.speed, speed, self.target)
 
-                #self.choose_direction()
 
-            # new speed ?
-            if self.mode == "eaten":
-                self.speed = 12
-            elif self.mode == "runaway":
-                self.speed = 2
-            elif self.mode == "chase":
-                self.speed = 5
-            else:
-                self.speed = 5
-
-                # in tunnel reduce speed to 2
-                if MAP[self.y][self.x] == 15:
-                    if not self.in_tunnel:
-                        self.in_tunnel = True
-                else:
-                    self.in_tunnel = False
-
-                if self.in_tunnel:
-                    self.speed = 2
 
             # Direction is set : move the ghost
             if self.direction == "left":
                 #self.real_x -= self.speed
-                self.real_x -= 0.1
-                self.rect.x = round(self.real_x)
+                self.real_x -= speed
+                self.rect.x = round(self.real_x/10)
                 # go to right border
                 if self.rect.x < -12 :
                     self.rect.x = self.game.WIDTH-12
                     self.real_x = self.rect.x
-
-            if self.direction == "right":
+            elif self.direction == "right":
                 #self.real_x += self.speed
-                self.real_x += 0.1
-                self.rect.x = round(self.real_x)
+                self.real_x += speed
+                self.rect.x = round(self.real_x/10)
                 # go to left border
                 if self.rect.x >= self.game.WIDTH:
                     self.rect.x = -12
                     self.real_x = -12
-
-            if self.direction == "up":
+            elif self.direction == "up":
                 #self.real_y -= self.speed
-                self.real_y -= 0.1
-                self.rect.y = round(self.real_y)
+                self.real_y -= speed
+                self.rect.y = round(self.real_y/10)
                 if self.rect.y < 0:
                     self.rect.y = self.game.HEIGHT-12
                     self.real_y = self.rect.y
-
-            if self.direction == "down":
+            elif self.direction == "down":
                 #self.real_y += self.speed
-                self.real_y += 0.1 
-                self.rect.y = round(self.real_y)
+                self.real_y += speed
+                self.rect.y = round(self.real_y/10)
                 if self.rect.y >= self.game.HEIGHT:
                     self.rect.y = 0
                     self.real_y = 0
