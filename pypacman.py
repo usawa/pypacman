@@ -104,15 +104,15 @@ MAP = [
         [50,  1, 36, 32, 32, 37,  1, 33, 33,  1, 36, 32, 32, 35, 34, 32, 32, 37,  1, 33, 33,  1, 36, 32, 32, 37,  1, 51],
         [50,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1, 51],
         [54, 49, 49, 49, 49, 57,  1, 33, 36, 32, 32, 35,  0, 33, 33,  0, 34, 32, 32, 37, 33,  1, 56, 49, 49, 49, 49, 55],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 34, 32, 32, 37,  0, 36, 37,  0, 36, 32, 32, 35, 33,  1, 51,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 56, 49, 49, 17, 17, 49, 49, 57,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
+        [16, 16, 16, 16, 16, 50,  1, 33, 34, 32, 32, 37,  0, 36, 37,  0, 36, 32, 32, 35, 33,  1, 51, 16, 16, 16, 16, 16],
+        [16, 16, 16, 16, 16, 50,  1, 33, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 33, 33,  1, 51, 16, 16, 16, 16, 16],
+        [16, 16, 16, 16, 16, 50,  1, 33, 33,  0, 56, 49, 49, 17, 17, 49, 49, 57,  0, 33, 33,  1, 51, 16, 16, 16, 16, 16],
         [48, 48, 48, 48, 48, 58,  1, 36, 37,  0, 51, 64, 64,  0,  0, 64, 64, 50,  0, 36, 37,  1, 59, 48, 48, 48, 48, 48],
         [15, 15, 15, 15, 15, 15,  1,  0,  0,  0, 51, 64,  0,  0,  0,  0, 64, 50,  0,  0,  0,  1, 15, 15, 15, 15, 15, 15],
         [49, 49, 49, 49, 49, 57,  1, 34, 35,  0, 51, 64, 64, 64, 64, 64, 64, 50,  0, 34, 35,  1, 56, 49, 49, 49, 49, 49],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 59, 48, 48, 48, 48, 48, 48, 58,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
-        [ 0,  0,  0,  0,  0, 50,  1, 33, 33,  0, 34, 32, 32, 32, 32, 32, 32, 35,  0, 33, 33,  1, 51,  0,  0,  0,  0,  0],
+        [16, 16, 16, 16, 16, 50,  1, 33, 33,  0, 59, 48, 48, 48, 48, 48, 48, 58,  0, 33, 33,  1, 51, 16, 16, 16, 16, 16],
+        [16, 16, 16, 16, 16, 50,  1, 33, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 33, 33,  1, 51, 16, 16, 16, 16, 16],
+        [16, 16, 16, 16, 16, 50,  1, 33, 33,  0, 34, 32, 32, 32, 32, 32, 32, 35,  0, 33, 33,  1, 51, 16, 16, 16, 16, 16],
         [52, 48, 48, 48, 48, 58,  1, 36, 37,  0, 36, 32, 32, 35, 34, 32, 32, 37,  0, 36, 37,  1, 59, 48, 48, 48, 48, 53],
         [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 51],
         [50,  1, 34, 32, 32, 35,  1, 34, 32, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 32, 35,  1, 34, 32, 32, 35,  1, 51],
@@ -164,9 +164,9 @@ class Pacman(pygame.sprite.Sprite):
         self.image = self.game.Pacman_pics['left'][1]
         self.rect = self.image.get_rect()
         self.rect.center = (self.x * 24 + 12, self.y * 24 + 12)
-        self.real_x = self.rect.x
-        self.real_y = self.rect.y
-        self.speed = 5
+        self.real_x = self.x * 24 * 10
+        self.real_y = self.y * 24 * 10
+        self.speed = 50
         self.direction = ""
         self.mode = "normal"
         self.allowed_moves = []
@@ -207,7 +207,7 @@ class Pacman(pygame.sprite.Sprite):
             self.game.score = self.game.score + 10
             MAP[self.y][self.x] = 0
             self.game.pacgums = self.game.pacgums - 1
-            self.miss_loops = 10
+            self.miss_loops = 5
 
         # Big pacgum : 50 It's time to chase !
         if MAP[self.y][self.x] == 2:
@@ -254,21 +254,34 @@ class Pacman(pygame.sprite.Sprite):
         """
         used to move pacman in any direction
         """
-        loop = 0
+        current_speed = self.speed
+        if self.miss_loops:
+            current_speed -= self.miss_loops
+            self.miss_loops = 0
 
-        while loop < self.speed:
+        # if the next move exceeds the next case
+        if self.direction == 'left' and self.real_x-current_speed < (self.x-1)*24*10:
+            next_speed = self.real_x - (self.x-1)*240
+        elif self.direction == 'right' and self.real_x+current_speed > (self.x+1)*24*10:
+            next_speed = (self.x+1)*240  - self.real_x
+        elif self.direction == 'up' and self.real_y-current_speed < (self.y-1)*24*10:
+            next_speed = self.real_y - (self.y-1)*240
+        elif self.direction == 'down' and self.real_y+current_speed > (self.y+1)*24*10:
+            next_speed = (self.y+1)*240 - self.real_y
+        else:
+            next_speed = current_speed
 
-
-            loop += 0.1
-
-            if self.miss_loops>0:
-                self.miss_loops -=1
+        moved = False
+        next_loops = (next_speed, current_speed-next_speed)
+        for speed in next_loops:
+            if speed == 0:
                 continue
 
             # Choose a direction only when we're on a MAP coordinates
-            if round(self.real_x) % 24 == 0 and round(self.real_y) % 24 == 0:
-                self.x = int(self.rect.x / 24)
-                self.y = int(self.rect.y / 24)
+            if (self.real_x /10) % 24 == 0 and (self.real_y/10) % 24 == 0:
+
+                self.x = int(self.real_x / 10 / 24)
+                self.y = int(self.real_y / 10 / 24)
 
                 self.change_mode()
 
@@ -279,53 +292,42 @@ class Pacman(pygame.sprite.Sprite):
                 if keys[pygame.K_LEFT]:
                     if MAP[self.y][self.x-1] < 16:
                         self.direction = "left"
-                if keys[pygame.K_RIGHT]:
+                elif keys[pygame.K_RIGHT]:
                     if self.x+1 < 28 and MAP[self.y][self.x+1] < 16:
                         self.direction = "right"
-                if keys[pygame.K_UP]:
+                elif keys[pygame.K_UP]:
                     if MAP[self.y - 1][self.x] < 16:
                         self.direction = "up"
-                if keys[pygame.K_DOWN]:
+                elif keys[pygame.K_DOWN]:
                     if self.y + 1 < 30 and MAP[self.y + 1][self.x] < 16:
                         self.direction = "down"
 
+            #print('Pacman, direction=', self.real_x, self.real_y, self.x, self.y,  self.direction, 'Original speed=', self.speed, 'loop_speed=',speed, 'loops values', next_loops)
+
             # Direction is set : move the ghost
-            moved = False
-
+            moved = True
             if self.direction == "left" and "left" in self.allowed_moves:
-                self.real_x -= 0.1
-                self.rect.x = round(self.real_x)
-                moved = True
-                # go to right border
-                if self.rect.x < 0:
+                self.real_x -= speed
+                self.rect.x = round(self.real_x/10)
+                # go to right tunnel 
+                if self.rect.x <= -24 :
                     self.rect.x = self.game.WIDTH-24
-                    self.real_x = self.rect.x
-
-            if self.direction == "right" and "right" in self.allowed_moves:
-                self.real_x += 0.1
-                self.rect.x = round(self.real_x)
-                moved = True
-                # go to left border
-                if self.rect.x > self.game.WIDTH-24:
-                    self.rect.x = 0
-                    self.real_x = 0
-
-            if self.direction == "up" and "up" in self.allowed_moves:
-                self.real_y -= 0.1
-                self.rect.y = round(self.real_y)
-                moved = True
-                if self.rect.y < 0:
-                    self.rect.y = self.game.HEIGHT-24
-                    self.real_y = self.rect.y
-
-            if self.direction == "down" and "down" in self.allowed_moves:
-                self.real_y += 0.1
-                self.rect.y = round(self.real_y)
-                moved = True
-                if self.rect.y > self.game.HEIGHT-24:
-                    self.real_y = 0
-                    self.rect.y = 0
-
+                    self.real_x = self.rect.x*10
+            elif self.direction == "right" and "right" in self.allowed_moves:
+                self.real_x += speed
+                self.rect.x = round(self.real_x/10)
+                # go to left tunnel
+                if self.rect.x >= self.game.WIDTH:
+                    self.rect.x = -24
+                    self.real_x = -240
+            elif self.direction == "up" and "up" in self.allowed_moves:
+                self.real_y -= speed
+                self.rect.y = round(self.real_y/10)
+            elif self.direction == "down" and "down" in self.allowed_moves:
+                self.real_y += speed
+                self.rect.y = round(self.real_y/10)
+            else:
+                moved = False
         if moved:
             self.count_moves += 1
 
@@ -690,11 +692,8 @@ class Ghost(pygame.sprite.Sprite):
                 # change mode alreay done, directino alreay set, we can forbid
                 self.forbid_turnback = True
 
-
             #if self.color == "red":
             #    print(self.color, 'direction=', self.real_x, self.real_y, self.x, self.y,  self.direction, 'Original speed=', self.speed, 'real_speed', real_speed, 'loop_speed=',speed, 'loops values', next_loops)
-
-
 
             # Direction is set : move the ghost
             if self.direction == "left":
