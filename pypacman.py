@@ -865,6 +865,11 @@ class Game:
         self.snd_eat_ghost = pygame.mixer.Sound(os.path.join(snd_folder, 'eat_ghost.wav'))
         self.snd_power_pellet = pygame.mixer.Sound(os.path.join(snd_folder, 'power_pellet.wav'))
 
+        self.snd_death_1 = pygame.mixer.Sound(os.path.join(snd_folder, 'death_1.wav'))
+        self.snd_death_2 = pygame.mixer.Sound(os.path.join(snd_folder, 'death_2.wav'))
+
+        self.snd_retreating = pygame.mixer.Sound(os.path.join(snd_folder, 'retreating.wav'))
+
     def load_bitmaps(self):
         """
         Load all bitmaps in use in the game
@@ -985,6 +990,8 @@ class Game:
         x_pos = 13*24
         y_pos = 17*24
 
+        pygame.mixer.Sound.play(self.snd_eat_fruit)
+
         score = FRUITS[bonus]['score']
         i = 1
         while i < 7:
@@ -1057,6 +1064,9 @@ class Game:
             i += 1
             time.sleep(0.05)
         self.all_sprites.add(ghost)
+        # sound for ghost back to jail
+        pygame.mixer.Sound.play(self.snd_retreating)
+
 
     def start_game(self):
         """
@@ -1104,6 +1114,8 @@ class Game:
         Display the dead pacman animation
         and reset everything
         """
+        pygame.mixer.stop()
+        pygame.mixer.Sound.play(self.snd_death_1)
         i = 1
         while i < 15:
 
@@ -1134,6 +1146,7 @@ class Game:
 
             time.sleep(0.1)
         pygame.display.update()
+        pygame.mixer.Sound.play(self.snd_death_2)
 
         # Reinit everything
         self.pacman.reinit(PACMAN_POS[0], PACMAN_POS[1])
