@@ -1117,6 +1117,10 @@ class Game:
         Display the dead pacman animation
         and reset everything
         """
+        # remove bonus
+        MAP[17][13] = 0
+
+        # Play sound 
         pygame.mixer.stop()
         pygame.mixer.Sound.play(self.snd_death_1)
         i = 1
