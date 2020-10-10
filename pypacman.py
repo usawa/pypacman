@@ -215,6 +215,8 @@ class Pacman(pygame.sprite.Sprite):
 
         # Big pacgum : 50 It's time to chase !
         if MAP[self.y][self.x] == 2:
+            # play sound
+            pygame.mixer.Sound.play(self.game.snd_power_pellet,2)
             self.game.score += 50
             MAP[self.y][self.x] = 0
             self.game.pacgums -= 1
@@ -859,6 +861,10 @@ class Game:
         self.munch[1] = pygame.mixer.Sound(os.path.join(snd_folder, 'munch_1.wav'))
         self.munch[2] = pygame.mixer.Sound(os.path.join(snd_folder, 'munch_2.wav'))
 
+        self.snd_eat_fruit = pygame.mixer.Sound(os.path.join(snd_folder, 'eat_fruit.wav'))
+        self.snd_eat_ghost = pygame.mixer.Sound(os.path.join(snd_folder, 'eat_ghost.wav'))
+        self.snd_power_pellet = pygame.mixer.Sound(os.path.join(snd_folder, 'power_pellet.wav'))
+
     def load_bitmaps(self):
         """
         Load all bitmaps in use in the game
@@ -1018,7 +1024,7 @@ class Game:
 
         x_pos = ghost.rect.x
         y_pos = ghost.rect.y
-
+        pygame.mixer.Sound.play(self.snd_eat_ghost)
         self.all_sprites.remove(ghost)
         i = 1
         while i < 7:
