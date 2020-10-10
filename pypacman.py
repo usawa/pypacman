@@ -870,6 +870,8 @@ class Game:
 
         self.snd_retreating = pygame.mixer.Sound(os.path.join(snd_folder, 'retreating.wav'))
 
+        self.snd_siren_1 = pygame.mixer.Sound(os.path.join(snd_folder, 'siren_1.wav'))
+
     def load_bitmaps(self):
         """
         Load all bitmaps in use in the game
@@ -1107,6 +1109,7 @@ class Game:
             pygame.display.flip()
 
             time.sleep(1)
+        pygame.mixer.Sound.play(self.snd_siren_1, loops=-1, fade_ms=500 )
 
         
     def loose_life(self):
@@ -1299,6 +1302,7 @@ class Game:
                         elif ghost.mode != "eaten":
                             self.lifes -= 1
                             self.loose_life()
+                            self.start_game()
                             self.current_mode_idx = 0
                             self.start_mode_timer = time.time()
                 else:
@@ -1306,6 +1310,7 @@ class Game:
                         if ghost.mode not in ("eaten", "runaway"):
                             self.lifes -= 1
                             self.loose_life()
+                            self.start_game()
                             self.current_mode_idx = 0
                             self.start_mode_timer = time.time()
                             break
