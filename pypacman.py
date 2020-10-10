@@ -167,7 +167,7 @@ class Pacman(pygame.sprite.Sprite):
         self.rect.center = (self.x * 24 + 12, self.y * 24 + 12)
         self.real_x = self.x * 24 * 10
         self.real_y = self.y * 24 * 10
-        self.speed = 50
+        self.speed = 60
         self.direction = "left"
         self.mode = "normal"
         self.allowed_moves = []
@@ -205,6 +205,9 @@ class Pacman(pygame.sprite.Sprite):
         chase = False
         # Single pacgum : 10
         if MAP[self.y][self.x] == 1:
+            # play sound
+            pygame.mixer.Sound.play(self.game.munch[self.game.pacgums%2 + 1])
+
             self.game.score = self.game.score + 10
             MAP[self.y][self.x] = 0
             self.game.pacgums = self.game.pacgums - 1
@@ -396,7 +399,7 @@ class Ghost(pygame.sprite.Sprite):
         self.forbid_turnback = True
         #self.direction = "left"
         self.direction = ''
-        self.speed = 50
+        self.speed = 60
         self.blinking_tempo = 0
         self.in_tunnel = False
 
@@ -638,13 +641,13 @@ class Ghost(pygame.sprite.Sprite):
     def get_speed(self):
         # new speed ?
         if self.mode == "eaten":
-            self.speed = 120
+            self.speed = 180
         elif self.mode == "runaway":
             self.speed = 20
         elif self.mode == "chase":
-            self.speed = 50
+            self.speed = 60
         else:
-            self.speed = 50
+            self.speed = 60
 
     # main function
     def update(self):
@@ -767,6 +770,9 @@ class Game:
         self.blue = None
         self.yellow = None
 
+        # Sounds
+        self.munch = None
+
         self.WIDTH = len(MAP[0])*24
         self.HEIGHT = len(MAP)*24
 
@@ -813,6 +819,8 @@ class Game:
 
         # load bitmaps
         self.load_bitmaps()
+        # load sounds
+        self.load_sounds()
 
         # declare sprites
         self.all_sprites = pygame.sprite.Group()
@@ -839,6 +847,17 @@ class Game:
         self.all_sprites.add(self.Ghosts)
         # for collisions
         self.all_ghosts.add(self.Ghosts)
+
+    def load_sounds(self):
+        """
+        load sounds
+        """
+        game_folder = os.path.dirname(__file__)
+        snd_folder = os.path.join(game_folder, 'snd')
+
+        self.munch = dict()
+        self.munch[1] = pygame.mixer.Sound(os.path.join(snd_folder, 'munch_1.wav'))
+        self.munch[2] = pygame.mixer.Sound(os.path.join(snd_folder, 'munch_2.wav'))
 
     def load_bitmaps(self):
         """
