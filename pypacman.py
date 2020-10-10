@@ -592,6 +592,8 @@ class Ghost(pygame.sprite.Sprite):
             self.old_mode = self.mode
             self.mode = new_mode
             self.mode_changed = True
+            reverse = self.opposite[self.moves.index(self.direction)]
+            self.direction = reverse
 
         else:
             # Modes are managed by game loop
@@ -614,7 +616,7 @@ class Ghost(pygame.sprite.Sprite):
         if self.mode_changed:
             self.get_speed()
             self.start_time = time.time()
-            if self.mode != 'scatter':
+            if self.mode not in ('scatter', 'runaway'):
                 self.forbid_turnback = False
             print(self.color, "mode changed to ", self.mode)
 
@@ -1022,6 +1024,7 @@ class Game:
         """
         All surfaces in black
         """
+        self.fake_screen.fill(BLACK)
         self.surface.fill(BLACK)
         self.top.fill(BLACK)
         self.bottom.fill(BLACK)
