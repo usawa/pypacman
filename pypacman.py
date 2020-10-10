@@ -167,7 +167,7 @@ class Pacman(pygame.sprite.Sprite):
         self.rect.center = (self.x * 24 + 12, self.y * 24 + 12)
         self.real_x = self.x * 24 * 10
         self.real_y = self.y * 24 * 10
-        self.speed = 60
+        self.speed = 55
         self.direction = "left"
         self.mode = "normal"
         self.allowed_moves = []
@@ -401,7 +401,7 @@ class Ghost(pygame.sprite.Sprite):
         self.forbid_turnback = True
         #self.direction = "left"
         self.direction = ''
-        self.speed = 60
+        self.speed = 55
         self.blinking_tempo = 0
         self.in_tunnel = False
 
@@ -647,9 +647,9 @@ class Ghost(pygame.sprite.Sprite):
         elif self.mode == "runaway":
             self.speed = 20
         elif self.mode == "chase":
-            self.speed = 60
+            self.speed = 55
         else:
-            self.speed = 60
+            self.speed = 55
 
     # main function
     def update(self):
@@ -781,7 +781,7 @@ class Game:
         self.FULL_WIDTH = self.WIDTH
         self.FULL_HEIGHT = self.HEIGHT + 64
 
-        self.lifes = 10
+        self.lifes = 3
 
         self.pacgums = self.count_pacgums()
         self.score = 0
@@ -1117,6 +1117,9 @@ class Game:
         Display the dead pacman animation
         and reset everything
         """
+
+        self.lifes -= 1
+
         # remove bonus
         MAP[17][13] = 0
 
@@ -1159,6 +1162,15 @@ class Game:
         self.pacman.reinit(PACMAN_POS[0], PACMAN_POS[1])
         for ghost in self.Ghosts:
             ghost.reinit(JAIL[ghost.color][0], JAIL[ghost.color][1], "jail")
+
+        # Remaining lifes ? We restart
+        if self.lifes > 0:
+            self.start_game()
+        
+        # Timers reinit
+        self.current_mode_idx = 0
+        self.start_mode_timer = time.time()
+
 
     def clear_all_surfaces(self):
         """
@@ -1241,90 +1253,84 @@ class Game:
         clock = pygame.time.Clock()
         # Game loop
         running = True
-        self.count_loops = 0
+        while running and self.level <= 1:
+            self.count_loops = 0
 
-        # start game
-        self.start_game()
+            # start game
+            self.start_game()
 
-        # increment level
-        self.level += 1
+            # increment level
+            self.level += 1
 
-        self.current_mode_idx = 0
-        self.current_mode = LEVELS[self.level]['MODES'][self.current_mode_idx][0]
-        self.start_mode_timer = time.time()
+            self.current_mode_idx = 0
+            self.current_mode = LEVELS[self.level]['MODES'][self.current_mode_idx][0]
+            self.start_mode_timer = time.time()
 
-        while running:
+            while running:
 
-            # keep loop running at the right speed
-            clock.tick(self.FPS)
+                # keep loop running at the right speed
+                clock.tick(self.FPS)
 
-            self.count_loops += 1
+                self.count_loops += 1
 
-            # Process input (events)
-            for event in pygame.event.get():
-                # check for closing window
-                if event.type == pygame.QUIT:
+                # Process input (events)
+                for event in pygame.event.get():
+                    # check for closing window
+                    if event.type == pygame.QUIT:
+                        running = False
+
+                # check if it's time to change mode
+                current_time = time.time()
+                if current_time - self.start_mode_timer > LEVELS[self.level]['MODES'][self.current_mode_idx][1]:
+                    self.start_mode_timer = current_time
+                    self.current_mode_idx += 1
+                    self.current_mode = LEVELS[self.level]['MODES'][self.current_mode_idx][0]
+
+                self.pacman.update()
+                self.all_ghosts.update()
+
+                # Add a life every 10000 points
+                if int(self.score / 10000) > lives_gained:
+                    lives_gained += 1
+                    self.lifes += 1
+
+                self.display_board_game()
+
+                # *after* drawing everything, flip the display
+                pygame.display.flip()
+
+
+                # Collision test
+                hit_list = self.collided()
+                if hit_list:
+                    if self.pacman.mode == "chase":
+                        for ghost in hit_list:
+                            if ghost.mode == "runaway":
+                                ghost.change_mode("eaten")
+                                self.ghosts_in_a_row += 1
+                                # Use a pow()
+                                ghost_score = 200*math.pow(2, self.ghosts_in_a_row-1)
+                                self.score += ghost_score
+                                # Found a sort of bug where collided the same ghost 5 times in a row !!! (collide function bug ???)
+                                #if ghost_score > 1600:
+                                #    self.ghosts_in_a_row = 0
+                                # diplay score
+                                self.eat_ghost(ghost, ghost_score)
+                            elif ghost.mode != "eaten":
+                                self.loose_life()
+                    else:
+                        for ghost in hit_list:
+                            if ghost.mode not in ("eaten", "runaway"):
+                                self.loose_life()
+                                break
+
+                # Won ?
+                if self.pacgums == 0:
                     running = False
 
-            # check if it's time to change mode
-            current_time = time.time()
-            if current_time - self.start_mode_timer > LEVELS[self.level]['MODES'][self.current_mode_idx][1]:
-                self.start_mode_timer = current_time
-                self.current_mode_idx += 1
-                self.current_mode = LEVELS[self.level]['MODES'][self.current_mode_idx][0]
+                if self.lifes == 0:
+                    running = False
 
-            self.pacman.update()
-            self.all_ghosts.update()
-
-            # Add a life every 10000 points
-            if int(self.score ) / 10000 > lives_gained:
-                lives_gained += 1
-                self.lifes += 1
-
-            self.display_board_game()
-
-            # *after* drawing everything, flip the display
-            pygame.display.flip()
-
-
-            # Collision test
-            hit_list = self.collided()
-            if hit_list:
-                if self.pacman.mode == "chase":
-                    for ghost in hit_list:
-                        if ghost.mode == "runaway":
-                            ghost.change_mode("eaten")
-                            self.ghosts_in_a_row += 1
-                            # Use a pow()
-                            ghost_score = 200*math.pow(2, self.ghosts_in_a_row-1)
-                            self.score += ghost_score
-                            # Found a sort of bug where collided the same ghost 5 times in a row !!! (collide function bug ???)
-                            #if ghost_score > 1600:
-                            #    self.ghosts_in_a_row = 0
-                            # diplay score
-                            self.eat_ghost(ghost, ghost_score)
-                        elif ghost.mode != "eaten":
-                            self.lifes -= 1
-                            self.loose_life()
-                            self.start_game()
-                            self.current_mode_idx = 0
-                            self.start_mode_timer = time.time()
-                else:
-                    for ghost in hit_list:
-                        if ghost.mode not in ("eaten", "runaway"):
-                            self.lifes -= 1
-                            self.loose_life()
-                            self.start_game()
-                            self.current_mode_idx = 0
-                            self.start_mode_timer = time.time()
-                            break
-
-            # Won ?
-            if self.pacgums == 0:
-                running = False
-
-            if self.lifes == 0:
-                running = False
 
 
 # Root code
