@@ -24,7 +24,8 @@ LEVELS[1] = {
         [ 'scatter', 5 ],
         [ 'chase', 9999999 ]
     ),
-    'red_dots_remaining': 20
+    'red_dots_remaining': 20,
+    'bonus': 'cherry'
 }
 """
 LEVELS[2] = [
@@ -55,14 +56,14 @@ LEVELS[5] = [
 LEVELS[6] = LEVELS[5]
 """
 
-FRUITS_SCORES = {   "cherry": 100,
-                    "strawberry": 300,
-                    "orange": 500,
-                    "apple": 700,
-                    "melon": 1000,
-                    "galboss": 2000,
-                    "bell": 3000,
-                    "key": 5000
+FRUITS = {  "cherry": {  'id': 7, "score": 100 },
+            "strawberry": {  'id': 8, "score": 300 },
+            "orange": {  'id': 9, "score": 500 },
+            "apple": {  'id': 10, "score": 700 },
+            "melon": {  'id': 11, "score": 1000 },
+            "galboss": {  'id': 12, "score": 2000 },
+            "bell": {  'id': 13, "score": 3000 },
+            "key": {  'id': 14, "score": 5000 }
 }
 
 SCATTER = { "red": (26,1) ,
@@ -83,7 +84,7 @@ PACMAN_TIMERS = {
     "chase": 6
 }
 
-PACMAN_POS = (14, 17)
+PACMAN_POS = (13, 23)
 
 FORBIDDEN_UP = [
     (12, 10),
@@ -117,7 +118,7 @@ MAP = [
         [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 51],
         [50,  1, 34, 32, 32, 35,  1, 34, 32, 32, 32, 35,  1, 33, 33,  1, 34, 32, 32, 32, 35,  1, 34, 32, 32, 35,  1, 51],
         [50,  1, 36, 32, 35, 33,  1, 36, 32, 32, 32, 37,  1, 36, 37,  1, 36, 32, 32, 32, 37,  1, 33, 34, 32, 37,  1, 51],
-        [50,  2,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  2, 51],
+        [50,  2,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  0,  0,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  2, 51],
         [54, 32, 35,  1, 33, 33,  1, 34, 35,  1, 34, 32, 32, 32, 32, 32, 32, 35,  1, 34, 35,  1, 33, 33,  1, 34, 32, 55],
         [52, 32, 37,  1, 36, 37,  1, 33, 33,  1, 36, 32, 32, 35, 34, 32, 32, 37,  1, 33, 33,  1, 36, 37,  1, 36, 32, 53],
         [50,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1, 51],
@@ -167,7 +168,7 @@ class Pacman(pygame.sprite.Sprite):
         self.real_x = self.x * 24 * 10
         self.real_y = self.y * 24 * 10
         self.speed = 50
-        self.direction = ""
+        self.direction = "left"
         self.mode = "normal"
         self.allowed_moves = []
         self.count_moves = 0
@@ -216,6 +217,18 @@ class Pacman(pygame.sprite.Sprite):
             self.game.pacgums -= 1
             self.miss_loops = 15
             chase = True
+
+        # Bonus !
+        if MAP[self.y][self.x] >= 7 and MAP[self.y][self.x] <= 14:
+            self.game.score += FRUITS[LEVELS[self.game.level]['bonus']]['score']
+            MAP[self.y][self.x] = 0
+            self.game.eat_bonus(LEVELS[self.game.level]['bonus'])
+
+        # Bonus management !
+        # First bonus at 170 remainings
+        # Second bonus at 70 remainings
+        if self.game.pacgums in (70,170):
+            MAP[17][13] = FRUITS[LEVELS[self.game.level]['bonus']]['id']
 
         return chase
 
@@ -740,11 +753,12 @@ class Game:
         self.Dead_pacman = None
         self.Ghost_pics = None
         self.Ghost_eyes = None
-        self.Ghost_scores = None
+        self.Scores = None
         self.Frightened_ghost = None
         self.Frightened_ghost_blinking = None
         self.Walls = None
         self.Bonuses = None
+        self.Ready = None
         self.ghosts_in_a_row = 0
 
         # ghosts are set using setattr but pylint is yelling...
@@ -881,18 +895,10 @@ class Game:
             self.Dead_pacman[i].set_colorkey(BLACK)
 
         # Ghost scores
-        self.Ghost_scores = dict()
-        for score in (200, 400, 800, 1600):
-            self.Ghost_scores[score] = pygame.image.load(os.path.join(img_folder, str(score)+'.png')).convert()
-            self.Ghost_scores[score].set_colorkey(BLACK)
-
-
-        # Bonuses
-        self.Bonuses = dict()
-        for bonus in ('apple', 'bell', 'cherry', 'galboss', 'key', 'melon', 'orange', 'strawberry'):
-            self.Bonuses[bonus] = pygame.image.load(os.path.join(img_folder, bonus+'.png')).convert()
-            self.Bonuses[bonus].set_colorkey(BLACK)
-
+        self.Scores = dict()
+        for score in (100, 200, 300, 400, 500, 700, 800, 1000, 1600, 2000, 3000, 5000):
+            self.Scores[score] = pygame.image.load(os.path.join(img_folder, str(score)+'.png')).convert()
+            self.Scores[score].set_colorkey(BLACK)
 
         # load walls based on values in MAP and if associated png exists
         self.Walls = dict()
@@ -902,6 +908,15 @@ class Game:
                     png = os.path.join(img_folder, str(c) + ".png")
                     if os.path.exists(png):
                         self.Walls[c] = pygame.image.load(png).convert()
+
+        # Bonuses
+        for bonus in range(7,15):
+            self.Walls[bonus] = pygame.image.load(os.path.join(img_folder, str(bonus)+'.png')).convert()
+            self.Walls[bonus].set_colorkey(BLACK)
+
+        # Ready
+        self.Ready = pygame.image.load(os.path.join(img_folder, 'ready.png')).convert()
+        self.Ready.set_colorkey(BLACK)
 
     def display_board_game(self):
         """
@@ -937,6 +952,46 @@ class Game:
         for life in range(0, self.lifes - 1):
             my_surface.blit(self.Pacman_pics['right'][2], (life*32+24, 4))
 
+    def eat_bonus(self, bonus):
+        """
+        Display bonus value
+        """
+
+        x_pos = 13*24
+        y_pos = 17*24
+
+        score = FRUITS[bonus]['score']
+        i = 1
+        while i < 7:
+
+            # evaluate the pygame event
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    break
+
+            # Draw all
+            self.clear_all_surfaces()
+
+            # Score
+            self.display_text(self.top,"Player 1     Score: "+str(int(self.score)), 24, 6)
+            # draw walls
+            self.display_map(self.surface)
+
+            # Draw sprites
+            self.all_sprites.draw(self.surface)
+            self.display_lifes(self.bottom)
+
+            # draw score on the top of ghost
+            self.surface.blit(self.Scores[score], (x_pos, y_pos - (4*i)))
+
+            self.blit_all_surfaces()
+
+            # *after* drawing everything, flip the display
+            pygame.display.flip()
+
+            i += 1
+            time.sleep(0.05)
+
     def eat_ghost(self, ghost, score):
         """
         Display Score over ghost
@@ -967,7 +1022,7 @@ class Game:
             self.display_lifes(self.bottom)
 
             # draw score on the top of ghost
-            self.surface.blit(self.Ghost_scores[score], (x_pos, y_pos - (4*i)))
+            self.surface.blit(self.Scores[score], (x_pos, y_pos - (4*i)))
 
             self.blit_all_surfaces()
 
@@ -978,6 +1033,47 @@ class Game:
             time.sleep(0.05)
         self.all_sprites.add(ghost)
 
+    def start_game(self):
+        """
+        Start a game
+        """
+        ready_sound = pygame.mixer.Sound("snd/game_start.wav")
+
+        i = 0
+        pygame.mixer.Sound.play(ready_sound)
+
+        while i<4:
+            # evaluate the pygame event
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    break
+
+            i += 1 
+            # Draw all
+            self.clear_all_surfaces()
+
+            # draw walls
+            self.display_map(self.surface)
+            # Score
+            self.display_text(self.top,"Player 1     Score: "+str(int(self.score)), 24, 6)
+            # draw walls
+            self.display_map(self.surface)
+
+            # Draw sprites
+            self.all_sprites.draw(self.surface)
+            self.display_lifes(self.bottom)
+
+            # draw Ready !
+            self.surface.blit(self.Ready, (11*24, 17*24))
+
+            self.blit_all_surfaces()
+
+            # *after* drawing everything, flip the display
+            pygame.display.flip()
+
+            time.sleep(1)
+
+        
     def loose_life(self):
         """
         Display the dead pacman animation
@@ -1089,23 +1185,6 @@ class Game:
 
         return hit_list
 
-    def manage_bonus(self):
-        """
-        Bonus is a 'false' ghost
-        """
-
-        bonus_set = False
-        allowed_bonuses = ("cherry")
-
-        # There can't be two bonuses at the same time
-        if not bonus_set:
-            if self.pacgums < 200:
-                bonus_set = True
-                self.bonus = Ghost(self, 14, 17, "cherry", "none")
-                self.Ghosts.append(self.bonus)
-                self.all_sprites.add(self.bonus)
-                self.all_ghosts.add(self.bonus)
-
     def play(self):
         """
         Main play function
@@ -1118,6 +1197,9 @@ class Game:
         # Game loop
         running = True
         self.count_loops = 0
+
+        # start game
+        self.start_game()
 
         # increment level
         self.level += 1
