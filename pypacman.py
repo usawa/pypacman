@@ -152,7 +152,7 @@ class Pacman(pygame.sprite.Sprite):
         self.count_moves = None
         self.start_time = None
         self.miss_loops = None
-
+        self.set_bonus = None
         self.reinit(x, y)
 
     def reinit(self, x, y):
@@ -232,7 +232,8 @@ class Pacman(pygame.sprite.Sprite):
         # Bonus management !
         # First bonus at 170 remainings
         # Second bonus at 70 remainings
-        if self.game.pacgums in (70,170):
+        if self.game.pacgums in (70,170) and self.set_bonus != self.game.pacgums:
+            self.set_bonus = self.game.pacgums
             MAP[17][13] = FRUITS[LEVELS[self.game.level]['bonus']]['id']
 
         return chase
