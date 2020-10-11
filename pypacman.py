@@ -350,6 +350,9 @@ class Pacman(pygame.sprite.Sprite):
         if moved:
             self.count_moves += 1
 
+        self.rect.x = round(self.real_x/10) - 4
+        self.rect.y = round(self.real_y/10) - 4
+
         if self.direction:
             if moved:
                 self.image = self.game.Pacman_pics[self.direction][self.count_moves % 3 + 1]
@@ -736,6 +739,9 @@ class Ghost(pygame.sprite.Sprite):
                 self.real_y += speed
                 self.rect.y = round(self.real_y/10)
 
+        self.rect.x = round(self.real_x/10) - 4
+        self.rect.y = round(self.real_y/10) - 4
+
         # Ghosts bitmaps depending of the status
         if self.mode == "runaway":
             current_time = time.time()
@@ -883,17 +889,17 @@ class Game:
 
         # load ghost pictures
         self.Frightened_ghost = dict()
-        self.Frightened_ghost[1] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_1.png')).convert()
-        self.Frightened_ghost[2] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_2.png')).convert()
+        self.Frightened_ghost[1] = pygame.transform.smoothscale(pygame.image.load(os.path.join(img_folder, 'frightened_ghost_1.png')).convert(),(32,32))
+        self.Frightened_ghost[2] = pygame.transform.smoothscale(pygame.image.load(os.path.join(img_folder, 'frightened_ghost_2.png')).convert(),(32,32))
         self.Frightened_ghost[1].set_colorkey(BLACK)
         self.Frightened_ghost[2].set_colorkey(BLACK)
 
         # frightened and blinking
         self.Frightened_ghost_blinking = dict()
         self.Frightened_ghost_blinking[1] = self.Frightened_ghost[1]
-        self.Frightened_ghost_blinking[2] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_4.png')).convert()
+        self.Frightened_ghost_blinking[2] = pygame.transform.smoothscale(pygame.image.load(os.path.join(img_folder, 'frightened_ghost_4.png')).convert(),(32,32))
         self.Frightened_ghost_blinking[3] = self.Frightened_ghost[2]
-        self.Frightened_ghost_blinking[4] = pygame.image.load(os.path.join(img_folder, 'frightened_ghost_3.png')).convert()
+        self.Frightened_ghost_blinking[4] = pygame.transform.smoothscale(pygame.image.load(os.path.join(img_folder, 'frightened_ghost_3.png')).convert(),(32,32))
         self.Frightened_ghost_blinking[2].set_colorkey(BLACK)
         self.Frightened_ghost_blinking[4].set_colorkey(BLACK)
 
@@ -904,13 +910,13 @@ class Game:
             for direction in ('left', 'right', 'up', 'down'):
                 self.Ghost_pics[color][direction] = dict()
                 for i in range(1, 3):
-                    self.Ghost_pics[color][direction][i] = pygame.image.load(os.path.join(img_folder, color+'_'+direction+'_ghost_'+str(i)+'.png')).convert()
+                    self.Ghost_pics[color][direction][i] = pygame.transform.smoothscale(pygame.image.load(os.path.join(img_folder, color+'_'+direction+'_ghost_'+str(i)+'.png')).convert(),(32,32))
                     self.Ghost_pics[color][direction][i].set_colorkey(BLACK)
 
         # Ghost eyes
         self.Ghost_eyes = dict()
         for direction in ('left', 'right', 'up', 'down'):
-            self.Ghost_eyes[direction] = pygame.image.load(os.path.join(img_folder, 'ghost_eyes_'+direction+'.png')).convert()
+            self.Ghost_eyes[direction] = pygame.transform.smoothscale(pygame.image.load(os.path.join(img_folder, 'ghost_eyes_'+direction+'.png')).convert(),(32,32))
             self.Ghost_eyes[direction].set_colorkey(BLACK)
 
         # load pacman pictures
@@ -918,19 +924,19 @@ class Game:
         for direction in ('left', 'right', 'up', 'down'):
             self.Pacman_pics[direction] = dict()
             for i in range(1, 4):
-                self.Pacman_pics[direction][i] = pygame.image.load(os.path.join(img_folder, 'pacman_'+direction+'_'+str(i)+'.png')).convert()
+                self.Pacman_pics[direction][i] = pygame.transform.smoothscale(pygame.image.load(os.path.join(img_folder, 'pacman_'+direction+'_'+str(i)+'.png')).convert(),(32,32))
                 self.Pacman_pics[direction][i].set_colorkey(BLACK)
 
         # dead pacman pictures
         self.Dead_pacman = dict()
         for i in range(1, 11):
-            self.Dead_pacman[i] = pygame.image.load(os.path.join(img_folder, 'pacman_dead_'+str(i)+'.png')).convert()
+            self.Dead_pacman[i] = pygame.transform.smoothscale(pygame.image.load(os.path.join(img_folder, 'pacman_dead_'+str(i)+'.png')).convert(),(32,32))
             self.Dead_pacman[i].set_colorkey(BLACK)
 
         # Ghost scores
         self.Scores = dict()
         for score in (100, 200, 300, 400, 500, 700, 800, 1000, 1600, 2000, 3000, 5000):
-            self.Scores[score] = pygame.image.load(os.path.join(img_folder, str(score)+'.png')).convert()
+            self.Scores[score] = pygame.transform.smoothscale(pygame.image.load(os.path.join(img_folder, str(score)+'.png')).convert(),(32,32))
             self.Scores[score].set_colorkey(BLACK)
 
         # load walls based on values in MAP and if associated png exists
