@@ -516,9 +516,9 @@ class Ghost(pygame.sprite.Sprite):
                 # Runaway
                 self.target = (self.game.pacman.x, self.game.pacman.y)
 
-        if self.mode == "runaway" and self.forbid_turnback:
-            self.direction = random.choice(list(self.allowed_moves))
-            return 0
+        #if self.mode == "runaway" and self.forbid_turnback:
+        #    self.direction = random.choice(list(self.allowed_moves))
+        #    return 0
 
         # We calculate for each possible moves
         for direction in self.allowed_moves:
@@ -616,9 +616,6 @@ class Ghost(pygame.sprite.Sprite):
             self.old_mode = self.mode
             self.mode = new_mode
             self.mode_changed = True
-            reverse = self.opposite[self.moves.index(self.direction)]
-            self.direction = reverse
-
         else:
             # Modes are managed by game loop
             # Runaway is sync with pacman current status
@@ -640,7 +637,7 @@ class Ghost(pygame.sprite.Sprite):
         if self.mode_changed:
             self.get_speed()
             self.start_time = time.time()
-            if self.mode not in ('scatter', 'runaway'):
+            if self.mode not in ('scatter'):
                 self.forbid_turnback = False
             print(self.color, "mode changed to ", self.mode)
 
