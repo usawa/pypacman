@@ -1,6 +1,8 @@
 # pypacman
 A small pacman written in Python, as a pygame proof of concept.
 
+# IT'S NOT FINISHED. Feel Free to contrib, modify, update, rewrite...
+
 ## License
 The **code and the graphics** are made by myself, and are under **GPLv3** License.
 The font is a freeware one.
