@@ -26,11 +26,12 @@ The game isn't finished. I stopped the dev once all algorithms were implemented.
 - Directions can be modified only on a "case" of the map. For example, in "frightened" mode, the ghosts have to finish their move to the next case to turn back.
 - Levels aren't implemented, neither the start/pause screen, even if the code is ready for that. More code is needed for the bonuses.
 - The code itself : I'm not a dev. I code Python for sysadmin, like snmp probes, nagios probes, ansible modules, etc. I also coded parsers, but games, never ! So a LOT of things, essentially based on objects, are perfectible. A lot !
+- I found sound has issues on Fedora 33 with pygame 1.9.6, so please prefer latest 2.0.0+ (even dev)
 - But, ... it works :) And its quite fast.
 
 ## Installation
 Use Python 3.6+
-Just install pygame 1.9.x or 2.0.0.dev14. See pygame website to see how to do it.
+Just install pygame 2.0.0.devXX (1.9.6 should work but with some sound issues). See pygame website to see how to do it.
 Then launch ./pypacman.py
 
 Code was written using Visual Studio Code (what a wonderful thing !).
