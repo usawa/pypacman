@@ -31,13 +31,13 @@ The game isn't finished. I stopped the dev once all algorithms were implemented.
 
 ## Installation
 Use Python 3.6+
-Just install pygame 2.0.0.devXX (1.9.6 should work but with some sound issues). See pygame website to see how to do it.
+Just install pygame 2.0.0 (1.9.6 should work but with some sound issues). See pygame website to see how to do it.
 Then launch ./pypacman.py
 
 Code was written using Visual Studio Code (what a wonderful thing !).
 Sprites has been designed using Piskel https://www.piskelapp.com/
 
-Tested on Linux (Fedora 32) and MacOS 10.13 and 10.15. On MacOS, perfs are really better with sdl2 and pygame 2.0.0.devXX.
+Tested on Linux (Fedora 32) and MacOS 10.13 and 10.15. On MacOS, perfs are really better with sdl2 and pygame 2.0.0.
 ```bash
 ./pypacman.py
 ```
