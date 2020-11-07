@@ -962,7 +962,7 @@ class Game:
         self.clear_all_surfaces()
 
         # Score
-        self.display_text(self.top,"Player 1     Score: "+str(int(self.score)), 24, 6)
+        self.display_score()
         # draw walls
         self.display_map(self.surface)
 
@@ -980,6 +980,9 @@ class Game:
         font = pygame.font.Font('RetroGaming.ttf', 18)
         text = font.render(my_text, True, color)
         my_surface.blit(text, (pos_x, pos_y))
+
+    def display_score(self):
+        self.display_text(self.top, "Player 1     Score: {}".format(self.score), 24, 6)
 
     def display_lifes(self, my_surface):
         """
@@ -1011,7 +1014,7 @@ class Game:
             self.clear_all_surfaces()
 
             # Score
-            self.display_text(self.top,"Player 1     Score: "+str(int(self.score)), 24, 6)
+            self.display_score()
             # draw walls
             self.display_map(self.surface)
 
@@ -1051,7 +1054,7 @@ class Game:
             self.clear_all_surfaces()
 
             # Score
-            self.display_text(self.top,"Player 1     Score: "+str(int(self.score)), 24, 6)
+            self.display_score()
             # draw walls
             self.display_map(self.surface)
 
@@ -1096,7 +1099,7 @@ class Game:
             # draw walls
             self.display_map(self.surface)
             # Score
-            self.display_text(self.top,"Player 1     Score: "+str(int(self.score)), 24, 6)
+            self.display_score()
             # draw walls
             self.display_map(self.surface)
 
