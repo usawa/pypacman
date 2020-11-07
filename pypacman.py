@@ -208,9 +208,9 @@ class Pacman(pygame.sprite.Sprite):
             # play sound
             pygame.mixer.Sound.play(self.game.munch[self.game.pacgums%2 + 1])
 
-            self.game.score = self.game.score + 10
+            self.game.score += 10
             MAP[self.y][self.x] = 0
-            self.game.pacgums = self.game.pacgums - 1
+            self.game.pacgums -= 1
             self.miss_loops = 5
 
         # Big pacgum : 50 It's time to chase !
