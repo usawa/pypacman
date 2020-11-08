@@ -757,6 +757,7 @@ class Game:
     Main class that manages the full game
     """
     def __init__(self):
+        self.theme = "default"
         self.dymmy = None
         self.Pacman_pics = None
         self.Dead_pacman = None
@@ -816,7 +817,7 @@ class Game:
 
         self.screen = pygame.display.set_mode((int(self.FULL_WIDTH * self.scale), int(self.FULL_HEIGHT * self.scale)))
         self.fake_screen = pygame.Surface((self.FULL_WIDTH, self.FULL_HEIGHT))
-        pygame.display.set_caption("Pacman by Slyce")
+        pygame.display.set_caption("Pacman by Usawa")
 
         # create a surface to work on
         self.surface = pygame.Surface((self.WIDTH, self.HEIGHT))
@@ -859,7 +860,9 @@ class Game:
         load sounds
         """
         game_folder = os.path.dirname(__file__)
-        snd_folder = os.path.join(game_folder, 'snd')
+        snd_folder = os.path.join(game_folder, 'themes/'+self.theme+'/snd')
+
+        self.ready = pygame.mixer.Sound(os.path.join(snd_folder,'game_start.wav'))
 
         self.munch = dict()
         self.munch[1] = pygame.mixer.Sound(os.path.join(snd_folder, 'munch_1.wav'))
@@ -882,7 +885,7 @@ class Game:
         """
 
         game_folder = os.path.dirname(__file__)
-        img_folder = os.path.join(game_folder, 'img')
+        img_folder = os.path.join(game_folder, 'themes/'+self.theme+'/img')
 
         # load ghost pictures
         self.Frightened_ghost = dict()
@@ -1081,10 +1084,8 @@ class Game:
         """
         Start a game
         """
-        ready_sound = pygame.mixer.Sound("snd/game_start.wav")
-
         i = 0
-        pygame.mixer.Sound.play(ready_sound)
+        pygame.mixer.Sound.play(self.ready)
 
         while i<4:
             # evaluate the pygame event
