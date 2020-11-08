@@ -5,11 +5,13 @@ A single pacman game designed as a proof of concept:
 - to understand ghosts algorithms
 """
 
+import sys
 import random
 import time
 import math
 import os
 import pygame
+import argparse
 
 LEVELS = {}
 
@@ -807,6 +809,9 @@ class Game:
         pygame.init()
         pygame.mixer.init()
 
+        # parse args
+        self.parse_args()
+
         # Check vertical resolution
         display_infos = pygame.display.Info()
         y_resolution = display_infos.current_h
@@ -854,6 +859,23 @@ class Game:
         self.all_sprites.add(self.Ghosts)
         # for collisions
         self.all_ghosts.add(self.Ghosts)
+
+    def parse_args(self):
+        """
+        Parse arguments
+        """
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-t', '--theme', help='Theme name', default='default')
+        args = parser.parse_args()
+
+        # Even if not set, theme is 'default'
+        # Check if theme directory is here
+        if not os.path.isdir(os.path.join(os.path.dirname(__file__), 'themes/'+args.theme)):
+            print("Theme "+args.theme+" directory not found. Default will be used", file=sys.stderr)
+            self.theme = 'default'
+        else:
+            self.theme = args.theme
+
 
     def load_sounds(self):
         """
