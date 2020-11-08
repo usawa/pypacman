@@ -786,7 +786,7 @@ class Game:
         self.HEIGHT = len(MAP)*24
 
         self.FULL_WIDTH = self.WIDTH
-        self.FULL_HEIGHT = self.HEIGHT + 64
+        self.FULL_HEIGHT = self.HEIGHT + 72
 
         self.lifes = 3
 
@@ -827,7 +827,7 @@ class Game:
         # create a surface to work on
         self.surface = pygame.Surface((self.WIDTH, self.HEIGHT))
         self.top = pygame.Surface((self.WIDTH, 32))
-        self.bottom = pygame.Surface((self.WIDTH, 32))
+        self.bottom = pygame.Surface((self.WIDTH, 40))
 
         # load bitmaps
         self.load_bitmaps()
