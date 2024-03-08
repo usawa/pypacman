@@ -1,0 +1,59 @@
+\begin{thebibliography}{10}
+
+\bibitem{WikiMaze}
+Maze-solving algorithm, December 2023.
+\newblock URL: \url{https://en.wikipedia.org/wiki/Maze-solving_algorithm}.
+
+\bibitem{WikiAStar}
+A$^*$ search algorithm, February 2024.
+\newblock URL: \url{https://en.wikipedia.org/wiki/A*_search_algorithm}.
+
+\bibitem{WikiBFS}
+Breadth-first search, January 2024.
+\newblock URL: \url{https://en.wikipedia.org/wiki/Breadth-first_search}.
+
+\bibitem{WikiDFS}
+Depth-first search, January 2024.
+\newblock URL: \url{https://en.wikipedia.org/wiki/Depth-first_search}.
+
+\bibitem{BerkeleyPacman}
+Pieter Abbeel, John DeNero, and Dan Klein.
+\newblock The pac-man projects, September 2014.
+\newblock URL: \url{http://ai.berkeley.edu/project_overview.htmlhttp://ai.berkeley.edu/project_overview.html}.
+
+\bibitem{hbokmannPacman}
+hbokmann.
+\newblock Pacman in python with pygame, October 2021.
+\newblock URL: \url{https://github.com/hbokmann/Pacman}.
+
+\bibitem{JanPacman}
+Jan Jileček.
+\newblock Creating pac-man clone in python in 300 lines of code or less— part 1, December 2022.
+\newblock URL: \url{https://github.com/janjilecek/pacman_python_pygame}.
+
+\bibitem{jostbrpymaze}
+jostbr.
+\newblock Maze generator and solver, April 2021.
+\newblock URL: \url{https://github.com/jostbr/pymaze}.
+
+\bibitem{JustToThePointPacman}
+JustToThePoint.
+\newblock Programming a pac-man in python introduction, May 2022.
+\newblock URL: \url{https://justtothepoint.com/code/pacman/}.
+
+\bibitem{LiuPacman}
+Davide Liu.
+\newblock Playing pacman with multi-agents adversarial search, February 2020.
+\newblock URL: \url{https://techs0uls.wordpress.com/2020/02/13/playing-pacman-with-multi-agents-adversarial-search/}.
+
+\bibitem{maurockML}
+maurock.
+\newblock Deep reinforcement learning, January 2021.
+\newblock URL: \url{https://github.com/maurock/snake-ga}.
+
+\bibitem{30ChessAlgs}
+tom7.
+\newblock 30 weird chess algorithms: Elo world, July 2021.
+\newblock URL: \url{https://www.youtube.com/watch?v=DpXy041BIlA&t=12s}.
+
+\end{thebibliography}

@@ -96,6 +96,9 @@ FORBIDDEN_UP = [
 ]
 
 # 28 (0-27) x 31 (0-30)
+# 1 is path with pacgum
+# 0 is clear path
+# 2 is big pacgum
 MAP = [
         [52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53],
         [50,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 33, 33,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 51],
@@ -225,7 +228,8 @@ class Pacman(pygame.sprite.Sprite):
             self.miss_loops = 15
             chase = True
 
-        # Bonus !
+        # Removed fruits for simplicity
+        '''# Bonus !
         if MAP[self.y][self.x] >= 7 and MAP[self.y][self.x] <= 14:
             self.game.score += FRUITS[LEVELS[self.game.level]['bonus']]['score']
             MAP[self.y][self.x] = 0
@@ -236,7 +240,7 @@ class Pacman(pygame.sprite.Sprite):
         # Second bonus at 70 remainings
         if self.game.pacgums in (70,170) and self.set_bonus != self.game.pacgums:
             self.set_bonus = self.game.pacgums
-            MAP[17][13] = FRUITS[LEVELS[self.game.level]['bonus']]['id']
+            MAP[17][13] = FRUITS[LEVELS[self.game.level]['bonus']]['id']'''
 
         return chase
 

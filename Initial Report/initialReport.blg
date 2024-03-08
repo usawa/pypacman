@@ -1,0 +1,74 @@
+This is BibTeX, Version 0.99d (TeX Live 2023)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: initialReport.aux
+The style file: plainurl.bst
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: bibliography.bib
+Warning--entry type for "hbokmannPacman" isn't style-file defined
+--line 9 of file bibliography.bib
+Warning--entry type for "JanPacman" isn't style-file defined
+--line 17 of file bibliography.bib
+Warning--entry type for "JustToThePointPacman" isn't style-file defined
+--line 25 of file bibliography.bib
+Warning--entry type for "BerkeleyPacman" isn't style-file defined
+--line 33 of file bibliography.bib
+Warning--entry type for "LiuPacman" isn't style-file defined
+--line 41 of file bibliography.bib
+Warning--entry type for "WikiMaze" isn't style-file defined
+--line 49 of file bibliography.bib
+Warning--entry type for "WikiBFS" isn't style-file defined
+--line 56 of file bibliography.bib
+Warning--entry type for "WikiAStar" isn't style-file defined
+--line 63 of file bibliography.bib
+Warning--entry type for "WikiDFS" isn't style-file defined
+--line 86 of file bibliography.bib
+Warning--to sort, need author or key in WikiMaze
+Warning--to sort, need author or key in WikiBFS
+Warning--to sort, need author or key in WikiDFS
+Warning--to sort, need author or key in WikiAStar
+You've used 12 entries,
+            2943 wiz_defined-function locations,
+            694 strings with 6473 characters,
+and the built_in function-call counts, 3858 in all, are:
+= -- 377
+> -- 83
+< -- 0
++ -- 33
+- -- 20
+* -- 143
+:= -- 478
+add.period$ -- 32
+call.type$ -- 12
+change.case$ -- 46
+chr.to.int$ -- 0
+cite$ -- 16
+duplicate$ -- 108
+empty$ -- 493
+format.name$ -- 20
+if$ -- 1109
+int.to.chr$ -- 0
+int.to.str$ -- 12
+missing$ -- 0
+newline$ -- 59
+num.names$ -- 16
+pop$ -- 170
+preamble$ -- 1
+purify$ -- 34
+quote$ -- 0
+skip$ -- 327
+stack$ -- 0
+substring$ -- 61
+swap$ -- 12
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 48
+warning$ -- 4
+while$ -- 16
+width$ -- 14
+write$ -- 114
+(There were 13 warnings)
