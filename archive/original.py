@@ -13,9 +13,6 @@ import os
 import pygame
 import argparse
 
-#algs
-from algs.rand_dir import Rand_Dir
-
 LEVELS = {}
 
 LEVELS[1] = {
@@ -144,11 +141,8 @@ class Pacman(pygame.sprite.Sprite):
     Pacman management class
     """
 
-    def __init__(self, my_game, x, y, alg):
+    def __init__(self, my_game, x, y):
         pygame.sprite.Sprite.__init__(self)
-
-        self.alg = None
-
         self.game = my_game
         self.x = None
         self.y = None
@@ -164,15 +158,12 @@ class Pacman(pygame.sprite.Sprite):
         self.start_time = None
         self.miss_loops = None
         self.set_bonus = None
-        self.reinit(x, y, alg)
+        self.reinit(x, y)
 
-    def reinit(self, x, y, alg):
+    def reinit(self, x, y):
         """
         Reinit pacman parameters
         """
-
-        self.alg = alg
-
         self.x = x
         self.y = y
 
@@ -238,7 +229,7 @@ class Pacman(pygame.sprite.Sprite):
             chase = True
 
         # Removed fruits for simplicity
-        '''# Bonus !
+        # Bonus !
         if MAP[self.y][self.x] >= 7 and MAP[self.y][self.x] <= 14:
             self.game.score += FRUITS[LEVELS[self.game.level]['bonus']]['score']
             MAP[self.y][self.x] = 0
@@ -249,7 +240,7 @@ class Pacman(pygame.sprite.Sprite):
         # Second bonus at 70 remainings
         if self.game.pacgums in (70,170) and self.set_bonus != self.game.pacgums:
             self.set_bonus = self.game.pacgums
-            MAP[17][13] = FRUITS[LEVELS[self.game.level]['bonus']]['id']'''
+            MAP[17][13] = FRUITS[LEVELS[self.game.level]['bonus']]['id']
 
         return chase
 
@@ -288,7 +279,7 @@ class Pacman(pygame.sprite.Sprite):
         """
         used to move pacman in any direction
         """
-        current_speed = self.speed #setting speed
+        current_speed = self.speed
         if self.miss_loops:
             current_speed -= self.miss_loops
             self.miss_loops = 0
@@ -310,30 +301,34 @@ class Pacman(pygame.sprite.Sprite):
         for speed in next_loops:
             if speed == 0:
                 continue
+
             # Choose a direction only when we're on a MAP coordinates
             if (self.real_x /10) % 24 == 0 and (self.real_y/10) % 24 == 0:
+
                 self.x = int(self.real_x / 10 / 24)
                 self.y = int(self.real_y / 10 / 24)
+
                 self.change_mode()
+
                 self.get_allowed_moves()
+
                 keys = pygame.key.get_pressed()
-                if self.alg == None:
-                  if keys[pygame.K_LEFT]: #add or alg.get_dir == 'left'?
-                      if MAP[self.y][self.x-1] < 16:
-                          self.direction = "left"
-                  elif keys[pygame.K_RIGHT]: #add or alg.get_dir == 'right'?
-                      if self.x+1 < 28 and MAP[self.y][self.x+1] < 16:
-                          self.direction = "right"
-                  elif keys[pygame.K_UP]: #add or alg.get_dir == 'up'?
-                      if MAP[self.y - 1][self.x] < 16:
-                          self.direction = "up"
-                  elif keys[pygame.K_DOWN]: #add or alg.get_dir == 'down'?
-                      if self.y + 1 < 30 and MAP[self.y + 1][self.x] < 16:
-                          self.direction = "down"
-                else: # if algorithm in use get direction from it
-                  self.direction = self.alg.get_dir()
-                  
+
+                if keys[pygame.K_LEFT]:
+                    if MAP[self.y][self.x-1] < 16:
+                        self.direction = "left"
+                elif keys[pygame.K_RIGHT]:
+                    if self.x+1 < 28 and MAP[self.y][self.x+1] < 16:
+                        self.direction = "right"
+                elif keys[pygame.K_UP]:
+                    if MAP[self.y - 1][self.x] < 16:
+                        self.direction = "up"
+                elif keys[pygame.K_DOWN]:
+                    if self.y + 1 < 30 and MAP[self.y + 1][self.x] < 16:
+                        self.direction = "down"
+
             #print('Pacman, direction=', self.real_x, self.real_y, self.x, self.y,  self.direction, 'Original speed=', self.speed, 'loop_speed=',speed, 'loops values', next_loops)
+
             # Direction is set : move the ghost
             moved = True
             if self.direction == "left" and "left" in self.allowed_moves:
@@ -767,9 +762,7 @@ class Game:
     """
     Main class that manages the full game
     """
-    def __init__(self, alg):
-        self.alg = alg
-
+    def __init__(self):
         self.theme = "default"
         self.dymmy = None
         self.Pacman_pics = None
@@ -864,7 +857,7 @@ class Game:
         self.Ghosts.append(self.blue)
 
         # declare pacman
-        self.pacman = Pacman(self, PACMAN_POS[0], PACMAN_POS[1], self.alg)
+        self.pacman = Pacman(self, PACMAN_POS[0], PACMAN_POS[1])
 
         self.all_sprites.add(self.pacman)
         self.all_sprites.add(self.Ghosts)
@@ -1200,7 +1193,7 @@ class Game:
         pygame.mixer.Sound.play(self.snd_death_2)
 
         # Reinit everything
-        self.pacman.reinit(PACMAN_POS[0], PACMAN_POS[1], self.alg)
+        self.pacman.reinit(PACMAN_POS[0], PACMAN_POS[1])
         for ghost in self.Ghosts:
             ghost.reinit(JAIL[ghost.color][0], JAIL[ghost.color][1], "jail")
 
@@ -1375,11 +1368,11 @@ class Game:
 
 
 # Root code
-def main(alg = None):
+def main():
     """
     main code to call the game
     """
-    game = Game(alg)
+    game = Game()
 
     # Play the game
     game.play()
@@ -1391,4 +1384,4 @@ def main(alg = None):
 
 if __name__ == "__main__":
     # execute only if run as a script
-    main(Rand_Dir())
+    main()
